@@ -1,0 +1,47 @@
+unit MainUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls;
+
+type
+  TForm1 = class(TForm)
+    Image1: TImage;
+    procedure Image1Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+  NodesCounter: Integer;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.Image1Click(Sender: TObject);
+var Pos: TPoint;
+    NodeName: String;
+    TextPosX: Integer;
+    Number: Integer;
+begin
+  Pos := ScreenToClient(Mouse.CursorPos);
+  Str(NodesCounter, NodeName);
+  Number := NodesCounter;
+  TextPosX := Pos.X;
+  while Number <> 0 do
+  begin
+    Number := Number div 10;
+    TextPosX := TextPosX - 4;
+  end;
+  Image1.Canvas.Ellipse(Pos.X - 20, Pos.Y - 20, Pos.X + 20, Pos.Y + 20);
+  Image1.Canvas.TextOut(TextPosX + 1, Pos.Y - 6, NodeName);
+  Inc(NodesCounter);
+end;
+
+end.
