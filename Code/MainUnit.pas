@@ -4,12 +4,29 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls;
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus;
 
 type
   TForm1 = class(TForm)
-    Image1: TImage;
-    procedure Image1Click(Sender: TObject);
+    Panel1: TPanel;
+    SpeedButton1: TSpeedButton;
+    SpeedButton2: TSpeedButton;
+    SpeedButton3: TSpeedButton;
+    SpeedButton4: TSpeedButton;
+    MainMenu1: TMainMenu;
+    N1: TMenuItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
+    N4: TMenuItem;
+    N5: TMenuItem;
+    N6: TMenuItem;
+    N7: TMenuItem;
+    N8: TMenuItem;
+    N9: TMenuItem;
+    SpeedButton5: TSpeedButton;
+    SpeedButton6: TSpeedButton;
+    SpeedButton7: TSpeedButton;
+    procedure FormClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -42,24 +59,23 @@ begin
   end;
 
   //Вывод круга
-  Form1.Image1.Canvas.Ellipse(Center.X - 20, Center.Y - 20, Center.X + 20, Center.Y + 20);
+  Form1.Canvas.Ellipse(Center.X - 20, Center.Y - 20, Center.X + 20, Center.Y + 20);
 
   //Вывод имени вершины
-  Form1.Image1.Canvas.TextOut(TextPosX + 1, Center.Y - 6, NodeName);
+  Form1.Canvas.TextOut(TextPosX + 1, Center.Y - 6, NodeName);
 end;
 
 //Событие нажатия на холст
-procedure TForm1.Image1Click(Sender: TObject);
-var Pos: TPoint; //Координата курсора
+procedure TForm1.FormClick(Sender: TObject);
+var Pos: TPoint;
 begin
-
   //Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
 
   //Добавление и вывод вершины графа
   DrawNode(NodesCounter, Pos);
   Inc(NodesCounter);
-  
+
 end;
 
 end.
