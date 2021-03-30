@@ -70,7 +70,7 @@ implementation
 
 {$R *.dfm}
 
-{ Функция нахождения вершины по номеру в списке }
+// Функция нахождения вершины по номеру в списке
 function GetByNumber(const Head: TPGraph; v: Integer): TPGraph;
 var
   i: Integer;
@@ -83,7 +83,6 @@ begin
 
 end;
 
-{ Функция нахождения вершины по точке на холсте }
 function GetByPoint(const Head: TPGraph; P: TPoint): Integer;
 var
   Node: TPGraph;
@@ -105,21 +104,7 @@ begin
     Result := 0;
 end;
 
-{ Процедура вычисления координат концов ребра на холсте }
-procedure GetLinkPoints(c1, c2: TPoint; var p1, p2: TPoint);
-var
-  d: Integer;
-begin
-  d := Round(Sqrt(Sqr(c2.x - c1.x) + Sqr(c2.y - c1.y)));
-
-  p1.x := Round(c1.x + 20 * (c2.x - c1.x) / d);
-  p1.y := Round(c1.y + 20 * (c2.y - c1.y) / d);
-
-  p2.x := Round(c2.x + 20 * (c1.x - c2.x) / d);
-  p2.y := Round(c2.y + 20 * (c1.y - c2.y) / d);
-end;
-
-{ Процедура добавления вершины в граф }
+// Процедура добавления вершины в граф
 procedure AddNode(var Tail: TPGraph; const Center: TPoint);
 begin
 
@@ -132,7 +117,7 @@ begin
     Tail := Tail.Next
   end;
 
-  // Сохранение новой вершины
+  // Сохранение данных о новой вершине
   Tail.Center := Center;
   Tail.NodeHead := nil;
   Tail.NodeTail := nil;
@@ -140,8 +125,7 @@ begin
 
 end;
 
-{ TODO 4 : Разобраться с шириной текста }
-{ Процедура рисования вершины графа }
+// Процедура рисования вершины графа
 procedure DrawNode(v: Integer; Center: TPoint);
 var
   Caption: String; // Имя вершины
@@ -167,38 +151,35 @@ begin
   Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
 end;
 
-{ TODO 1: Продумать баги добавления рёбер }
-{ Процедура добавления рёбер в граф }
 procedure AddLink(var Head: TPGraph; v, u: Integer);
 var
-  Node: TPGraph;
+  ListNode: TPGraph;
   i, Tmp: Integer;
 begin
   Tmp := v;
   for i := 1 to 2 do
   begin
-    Node := GetByNumber(Head, v); // Получение инцидентной вершины
+    ListNode := GetByNumber(Head, v); // Получение инцидентной вершины
 
-    with Node^ do
+    // Инициализация указателя на соседа
+    if ListNode.NodeTail = nil then
+      New(ListNode.NodeTail)
+    else
+    begin
+      New(ListNode.NodeTail.Next);
+      ListNode.NodeTail := ListNode.NodeTail.Next;
+    end;
+
+    // Сохранение информации о соседе
+    with ListNode^ do
     begin
 
-      // Инициализация указателя на соседа
-      if NodeTail = nil then
-        New(NodeTail)
-      else
-      begin
-        New(NodeTail.Next);
-        NodeTail := NodeTail.Next;
-      end;
-
-      // Инициализация головы списка соседей
+      // Инициализация головы списка
       if NodeHead = nil then
         NodeHead := NodeTail;
 
-      // Сохранение соседа
       NodeTail.AdjNode := u;
       NodeTail.Next := nil;
-
     end;
 
     // Переход к другой инцидентной вершине
@@ -208,18 +189,24 @@ begin
 
 end;
 
-{ Процедура рисования ребра графа }
 procedure DrawLink(Head: TPGraph; v, u: Integer);
 var
-  Center1, Center2: TPoint;
+  c1, c2: TPoint;
   d: Integer;
-  Point1, Point2: TPoint;
+  p1, p2: TPoint;
 begin
-  Center1 := GetByNumber(Head, v).Center;
-  Center2 := GetByNumber(Head, u).Center;
-  GetLinkPoints(Center1, Center2, Point1, Point2);
-  Form1.Canvas.MoveTo(Point1.x, Point1.y);
-  Form1.Canvas.LineTo(Point2.x, Point2.y);
+  c1 := GetByNumber(Head, v).Center;
+  c2 := GetByNumber(Head, u).Center;
+  d := Round(Sqrt(Sqr(c2.x - c1.x) + Sqr(c2.y - c1.y)));
+
+  p1.x := Round(c1.x + 20 * (c2.x - c1.x) / d);
+  p1.y := Round(c1.y + 20 * (c2.y - c1.y) / d);
+
+  p2.x := Round(c2.x + 20 * (c1.x - c2.x) / d);
+  p2.y := Round(c2.y + 20 * (c1.y - c2.y) / d);
+
+  Form1.Canvas.MoveTo(p1.x, p1.y);
+  Form1.Canvas.LineTo(p2.x, p2.y);
 end;
 
 // Событие нажатия на холст
@@ -255,8 +242,6 @@ begin
           if EndNode <> 0 then
           begin
             // TODO 1: Проверять наличие этого ребра в графе
-            { TODO 3: Передавать указатели на нужные вершины:
-              нужно для AddLink, если соседи по возрастанию }
             AddLink(GraphHead, StartNode, EndNode);
             DrawLink(GraphHead, StartNode, EndNode);
             StartNode := 0;

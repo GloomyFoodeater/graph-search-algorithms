@@ -255,8 +255,7 @@ begin
           if EndNode <> 0 then
           begin
             // TODO 1: ѕровер€ть наличие этого ребра в графе
-            { TODO 3: ѕередавать указатели на нужные вершины:
-              нужно дл€ AddLink, если соседи по возрастанию }
+            // TODO 3: ѕередавать указатели на нужные вершины
             AddLink(GraphHead, StartNode, EndNode);
             DrawLink(GraphHead, StartNode, EndNode);
             StartNode := 0;

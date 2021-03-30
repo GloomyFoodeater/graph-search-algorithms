@@ -9,13 +9,9 @@ uses
 begin
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);
-  NodeCounter := 0;
+  NodeCounter := 1;
   State := stNone;
-  with Form1.Canvas do
-  begin
-    Pen.Width := 3;
-    Font.Size := 10;
-  end;
+  Form1.Canvas.Pen.Width := 3;
+  Form1.Canvas.Font.Size := 10;
   Application.Run;
-
 end.

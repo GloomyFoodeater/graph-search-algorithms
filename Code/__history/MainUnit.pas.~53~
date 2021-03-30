@@ -105,21 +105,7 @@ begin
     Result := 0;
 end;
 
-{ Процедура вычисления координат концов ребра на холсте }
-procedure GetLinkPoints(c1, c2: TPoint; var p1, p2: TPoint);
-var
-  d: Integer;
-begin
-  d := Round(Sqrt(Sqr(c2.x - c1.x) + Sqr(c2.y - c1.y)));
-
-  p1.x := Round(c1.x + 20 * (c2.x - c1.x) / d);
-  p1.y := Round(c1.y + 20 * (c2.y - c1.y) / d);
-
-  p2.x := Round(c2.x + 20 * (c1.x - c2.x) / d);
-  p2.y := Round(c2.y + 20 * (c1.y - c2.y) / d);
-end;
-
-{ Процедура добавления вершины в граф }
+// Процедура добавления вершины в граф
 procedure AddNode(var Tail: TPGraph; const Center: TPoint);
 begin
 
@@ -167,8 +153,6 @@ begin
   Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
 end;
 
-{ TODO 1: Продумать баги добавления рёбер }
-{ Процедура добавления рёбер в граф }
 procedure AddLink(var Head: TPGraph; v, u: Integer);
 var
   Node: TPGraph;
@@ -211,15 +195,22 @@ end;
 { Процедура рисования ребра графа }
 procedure DrawLink(Head: TPGraph; v, u: Integer);
 var
-  Center1, Center2: TPoint;
+  c1, c2: TPoint;
   d: Integer;
-  Point1, Point2: TPoint;
+  p1, p2: TPoint;
 begin
-  Center1 := GetByNumber(Head, v).Center;
-  Center2 := GetByNumber(Head, u).Center;
-  GetLinkPoints(Center1, Center2, Point1, Point2);
-  Form1.Canvas.MoveTo(Point1.x, Point1.y);
-  Form1.Canvas.LineTo(Point2.x, Point2.y);
+  c1 := GetByNumber(Head, v).Center;
+  c2 := GetByNumber(Head, u).Center;
+  d := Round(Sqrt(Sqr(c2.x - c1.x) + Sqr(c2.y - c1.y)));
+
+  p1.x := Round(c1.x + 20 * (c2.x - c1.x) / d);
+  p1.y := Round(c1.y + 20 * (c2.y - c1.y) / d);
+
+  p2.x := Round(c2.x + 20 * (c1.x - c2.x) / d);
+  p2.y := Round(c2.y + 20 * (c1.y - c2.y) / d);
+
+  Form1.Canvas.MoveTo(p1.x, p1.y);
+  Form1.Canvas.LineTo(p2.x, p2.y);
 end;
 
 // Событие нажатия на холст
@@ -255,8 +246,6 @@ begin
           if EndNode <> 0 then
           begin
             // TODO 1: Проверять наличие этого ребра в графе
-            { TODO 3: Передавать указатели на нужные вершины:
-              нужно для AddLink, если соседи по возрастанию }
             AddLink(GraphHead, StartNode, EndNode);
             DrawLink(GraphHead, StartNode, EndNode);
             StartNode := 0;

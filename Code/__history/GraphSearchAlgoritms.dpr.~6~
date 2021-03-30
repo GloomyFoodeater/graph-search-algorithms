@@ -17,5 +17,4 @@ begin
     Font.Size := 10;
   end;
   Application.Run;
-
 end.

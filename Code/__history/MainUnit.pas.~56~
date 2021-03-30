@@ -105,7 +105,7 @@ begin
     Result := 0;
 end;
 
-{ Процедура вычисления координат концов ребра на холсте }
+{Процедура вычисления координат концов ребра на холсте}
 procedure GetLinkPoints(c1, c2: TPoint; var p1, p2: TPoint);
 var
   d: Integer;
@@ -217,7 +217,9 @@ var
 begin
   Center1 := GetByNumber(Head, v).Center;
   Center2 := GetByNumber(Head, u).Center;
+
   GetLinkPoints(Center1, Center2, Point1, Point2);
+
   Form1.Canvas.MoveTo(Point1.x, Point1.y);
   Form1.Canvas.LineTo(Point2.x, Point2.y);
 end;
@@ -255,8 +257,6 @@ begin
           if EndNode <> 0 then
           begin
             // TODO 1: Проверять наличие этого ребра в графе
-            { TODO 3: Передавать указатели на нужные вершины:
-              нужно для AddLink, если соседи по возрастанию }
             AddLink(GraphHead, StartNode, EndNode);
             DrawLink(GraphHead, StartNode, EndNode);
             StartNode := 0;
