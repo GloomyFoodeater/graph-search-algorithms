@@ -1,2 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject/>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.391,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.683,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Digraph.pas</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -6,8 +6,6 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph;
 
-{ TODO 3: Вместо формы использовать Image для рисования,
-  чтобы не стирался рисунок при сворачивании формы }
 type
   TForm1 = class(TForm)
     Panel1: TPanel;
@@ -52,19 +50,18 @@ implementation
 
 {$R *.dfm}
 
-// TODO 4: Добавить наконечник стрелки
 { Процедура вычисления координат концов ребра на холсте }
-procedure GetLinkPoints(c1, c2: TPoint; var p: Array of TPoint);
+procedure GetLinkPoints(c1, c2: TPoint; Points: Array of TPoint);
 var
   d: Integer;
 begin
   d := Distance(c1, c2);
 
-  p[0].x := Round(c2.x + 20 * (c1.x - c2.x) / d);
-  p[0].y := Round(c2.y + 20 * (c1.y - c2.y) / d);
+  Points[0].x := Round(c1.x + 20 * (c2.x - c1.x) / d);
+  Points[0].y := Round(c1.y + 20 * (c2.y - c1.y) / d);
 
-  p[1].x := Round(c1.x + 20 * (c2.x - c1.x) / d);
-  p[1].y := Round(c1.y + 20 * (c2.y - c1.y) / d);
+  Points[1].x := Round(c2.x + 20 * (c1.x - c2.x) / d);
+  Points[1].y := Round(c2.y + 20 * (c1.y - c2.y) / d);
 
 end;
 
@@ -99,17 +96,15 @@ end;
 procedure DrawLink(G: TGraph; u, v: TPNode);
 var
   d: Integer;
-  Points: Array [1 .. 2] of TPoint;
+  Points: Array[1..2] of TPoint;
 begin
   d := Distance(u.Center, v.Center);
   if d > 20 then
   begin
     GetLinkPoints(u.Center, v.Center, Points);
-    Form1.Canvas.Polyline(Points);
-
-    // TODO 4: Убрать рисование круга
-    Form1.Canvas.Ellipse(Points[1].x - 5, Points[1].y - 5, Points[1].x + 5,
-      Points[1].y + 5);
+    Form1.Canvas.MoveTo(Points[1].x, Points[1].y);
+    Form1.Canvas.LineTo(Points[2].x, Points[2].y);
+    //Form1.Canvas.Polyline(LinkPolyLine);
   end;
 end;
 
@@ -122,6 +117,7 @@ var
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
+  Form1.Canvas.Pen.Color := clBlack;
   case State of
     stAddNode: // Добавление вершины графа
       begin
@@ -142,7 +138,6 @@ begin
             AddLink(G, StartNode.Number, EndNode.Number);
             DrawLink(G, StartNode, EndNode);
             StartNode := nil;
-            EndNode := nil;
           end;
         end;
       end;
@@ -169,14 +164,33 @@ begin
   end;
 end;
 
+{ TODO 2 : Доделать освобождение памяти при закрытии }
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  pNode: TPNode;
+  pAdjNode: TPAdjList;
 begin
-  DisposeGraph(G);
+
+  // Цикл А1. Освобождение списка вершин
+  while G.Head <> nil do
+  begin
+    pNode := G.Head;
+
+    // Цикл А2. Освобождение списка соседей вершины
+    while pNode.Head <> nil do
+    begin
+      pAdjNode := pNode.Head;
+      pNode.Head := pNode.Head.Next;
+      Dispose(pAdjNode);
+    end; // Конец А2
+
+    G.Head := G.Head.Next;
+    Dispose(pNode);
+  end; // Конец А1
 end;
 
 procedure TForm1.AddLinkBtnClick(Sender: TObject);
 begin
-  StartNode := nil;
   if AddLinkBtn.Down then
     State := stAddLink
   else
@@ -185,7 +199,6 @@ end;
 
 procedure TForm1.AddNodeBtnClick(Sender: TObject);
 begin
-  StartNode := nil;
   if AddNodeBtn.Down then
     State := stAddNode
   else

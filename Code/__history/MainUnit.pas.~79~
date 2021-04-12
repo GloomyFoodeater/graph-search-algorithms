@@ -6,8 +6,6 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph;
 
-{ TODO 3: ¬место формы использовать Image дл€ рисовани€,
-  чтобы не стиралс€ рисунок при сворачивании формы }
 type
   TForm1 = class(TForm)
     Panel1: TPanel;
@@ -52,7 +50,7 @@ implementation
 
 {$R *.dfm}
 
-// TODO 4: ƒобавить наконечник стрелки
+//TODO 4: ƒобавить наконечник стрелки
 { ѕроцедура вычислени€ координат концов ребра на холсте }
 procedure GetLinkPoints(c1, c2: TPoint; var p: Array of TPoint);
 var
@@ -107,7 +105,7 @@ begin
     GetLinkPoints(u.Center, v.Center, Points);
     Form1.Canvas.Polyline(Points);
 
-    // TODO 4: ”брать рисование круга
+    //TODO 4: ”брать рисование круга
     Form1.Canvas.Ellipse(Points[1].x - 5, Points[1].y - 5, Points[1].x + 5,
       Points[1].y + 5);
   end;
