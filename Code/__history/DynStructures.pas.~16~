@@ -1,0 +1,72 @@
+unit DynStructures;
+
+interface
+
+type
+  // Тип односвязный список с натуральными числами
+  TList = ^TListElem;
+
+  TListElem = record
+    Elem: Cardinal;
+    Next: TList;
+  end;
+
+  // Тип стека с целыми числами
+  TStack = TList;
+
+  { //Тип очереди с целыми числами
+    TQueue = TList;
+  }
+
+procedure PushBack(var st: TStack; n: Integer);
+function PopBack(var st: TStack): Cardinal;
+function isEmpty(const st: TList): Boolean;
+
+implementation
+
+{ Процедура добавления элемента в стек }
+procedure PushBack;
+var
+  t: TStack; // Добавляемый элемент стека
+begin
+
+  // Инициализация нового элемента
+  New(t);
+  t.Elem := n;
+  t.Next := nil;
+
+  // Перемещение вершины стека
+  if not isEmpty(st) then
+    t.Next := st;
+  st := t;
+
+end;
+
+{ Функция извлечения значения вершины стека с удалением }
+function PopBack;
+var
+  t: TStack; // Извлекаемый из стека элемент
+begin
+
+  if not isEmpty(st) then
+  begin
+    // Перемещение вершины стека
+    t := st;
+    st := st.Next;
+
+    //Извлечение элемента с очисткой указателя
+    Result := t.Elem;
+    Dispose(t);
+  end
+  else
+    Result := 0;
+
+end;
+
+{Функция проверки динамической структуры на пустоту}
+function isEmpty;
+begin
+  Result := st = nil;
+end;
+
+end.

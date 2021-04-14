@@ -136,7 +136,7 @@ begin
   // Получение вершины
   Node := GetByNumber(G, u);
 
-  // Список смежности был пуст
+  //Список смежности был пуст
   if Node.Head = nil then
   begin
     New(Node.Head);
@@ -146,10 +146,10 @@ begin
   else
   begin
 
-    // Получение начального соседа
+    //Получение начального соседа
     a := Node.Head;
 
-    // Поиск соседа, который больше добавляемого
+    //Поиск соседа, который больше добавляемого
     isFound := (a.Elem > v) or (a.Next = nil) or (a.Next.Elem > v);
     while not isFound do
     begin
@@ -157,14 +157,14 @@ begin
       isFound := (a.Next = nil) or (a.Next.Elem > v);
     end;
 
-    // Инициализация нового соседа
+    //Инициализация нового соседа
     New(b);
     b.Elem := v;
 
     if Node.Head.Elem > v then
     begin
 
-      // Соседа нужно вставить перед головой списка
+      //Соседа нужно вставить перед головой списка
       b.Next := a;
       Node.Head := b;
     end
@@ -212,7 +212,6 @@ begin
   end; // Конец А1
 end;
 
-// TODO 1: Сохранять путь в очередь
 function DFS(const G: TGraph; u, v: Integer): Boolean;
 var
   Node: TPNode;
@@ -223,6 +222,7 @@ var
   i: Integer;
   w: Cardinal;
 begin
+  isFound := u = v;
 
   // Подготовка стека
   InitList(Stack);
@@ -233,10 +233,14 @@ begin
   for i := Low(isVisited) to High(isVisited) do
     isVisited[i] := False;
 
-  isFound := u = v;
   // Цикл по стеку, пока не найдена вершина
   while not(isEmpty(Stack) or isFound) do
   begin
+
+    // Посещение вершины
+    u := PopBack(Stack);
+    isFound := u = v;
+    isVisited[u - 1] := true;
 
     // Цикл по соседям вершины
     Node := GetByNumber(G, u);
@@ -249,12 +253,8 @@ begin
       Neighbour := Neighbour.Next;
     end;
 
-    // Посещение вершины
-    u := PopBack(Stack);
-    isFound := u = v;
-    isVisited[u - 1] := true;
-
   end;
+
 
   Result := isFound;
 end;

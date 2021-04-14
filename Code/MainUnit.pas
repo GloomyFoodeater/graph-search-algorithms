@@ -6,8 +6,6 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph;
 
-{ TODO 3: Вместо формы использовать Image для рисования,
-  чтобы не стирался рисунок при сворачивании формы }
 type
   TForm1 = class(TForm)
     Panel1: TPanel;
@@ -25,13 +23,15 @@ type
     N7: TMenuItem;
     N8: TMenuItem;
     N9: TMenuItem;
-    SpeedButton5: TSpeedButton;
+    DFSBtn: TSpeedButton;
     SpeedButton6: TSpeedButton;
     SpeedButton7: TSpeedButton;
     procedure FormClick(Sender: TObject);
     procedure AddNodeBtnClick(Sender: TObject);
     procedure AddLinkBtnClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure DFSBtnClick(Sender: TObject);
+    procedure FormPaint(Sender: TObject);
   private
     { Private declarations }
   public
@@ -52,7 +52,6 @@ implementation
 
 {$R *.dfm}
 
-// TODO 4: Добавить наконечник стрелки
 { Процедура вычисления координат концов ребра на холсте }
 procedure GetLinkPoints(c1, c2: TPoint; var p: Array of TPoint);
 var
@@ -68,7 +67,6 @@ begin
 
 end;
 
-{ TODO 4 : Разобраться с шириной текста }
 { Процедура рисования вершины графа }
 procedure DrawNode(v: Integer; Center: TPoint);
 var
@@ -96,18 +94,17 @@ begin
 end;
 
 { Процедура рисования ребра графа }
-procedure DrawLink(G: TGraph; u, v: TPNode);
+procedure DrawLink(G: TGraph; c1, c2: TPoint);
 var
   d: Integer;
   Points: Array [1 .. 2] of TPoint;
 begin
-  d := Distance(u.Center, v.Center);
+  d := Distance(c1, c2);
   if d > 20 then
   begin
-    GetLinkPoints(u.Center, v.Center, Points);
+    GetLinkPoints(c1, c2, Points);
     Form1.Canvas.Polyline(Points);
 
-    // TODO 4: Убрать рисование круга
     Form1.Canvas.Ellipse(Points[1].x - 5, Points[1].y - 5, Points[1].x + 5,
       Points[1].y + 5);
   end;
@@ -126,7 +123,7 @@ begin
     stAddNode: // Добавление вершины графа
       begin
         AddNode(G, Pos);
-        DrawNode(G.VG, Pos);
+        DrawNode(G.Order, Pos);
       end;
     stAddLink:
       begin
@@ -140,7 +137,7 @@ begin
           if (EndNode <> nil) and (StartNode <> EndNode) then
           begin
             AddLink(G, StartNode.Number, EndNode.Number);
-            DrawLink(G, StartNode, EndNode);
+            DrawLink(G, StartNode.Center, EndNode.Center);
             StartNode := nil;
             EndNode := nil;
           end;
@@ -156,7 +153,21 @@ begin
       end;
     stDFS:
       begin
-
+        if StartNode = nil then
+        begin
+          StartNode := GetByPoint(G, Pos);
+        end
+        else
+        begin
+          EndNode := GetByPoint(G, Pos);
+          if (EndNode <> nil) then
+          begin
+            if (DFS(G, StartNode.Number, EndNode.Number)) then
+              DrawNode(0, EndNode.Center);
+            StartNode := nil;
+            EndNode := nil;
+          end;
+        end;
       end;
     stBFS:
       begin
@@ -172,6 +183,45 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DisposeGraph(G);
+end;
+
+procedure TForm1.FormPaint(Sender: TObject);
+var
+  p1, p2, p3, p4, p5: TPoint;
+  p: Array [1 .. 5] of TPoint;
+  i: Integer;
+begin
+  InitializeGraph(G);
+  p[1].x := 300;
+  p[1].y := 300;
+  p[2].x := 200;
+  p[2].y := 400;
+  p[3].x := 400;
+  p[3].y := 400;
+  p[4].x := 300;
+  p[4].y := 500;
+  p[5].x := 300;
+  p[5].y := 100;
+  for i := 1 to 5 do
+  begin
+    AddNode(G, p[i]);
+    DrawNode(i, p[i]);
+  end;
+  for i := 2 to 5 do
+  begin
+    AddLink(G, 1, i);
+    DrawLink(G, GetByNumber(G, 1).Center, GetByNumber(G, i).Center);
+  end;
+
+end;
+
+procedure TForm1.DFSBtnClick(Sender: TObject);
+begin
+  StartNode := nil;
+  if DFSBtn.Down then
+    State := stDFS
+  else
+    State := stNone;
 end;
 
 procedure TForm1.AddLinkBtnClick(Sender: TObject);

@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 389
   Top = 123
-  Width = 1392
-  Height = 749
   Caption = 'Form1'
+  ClientHeight = 690
+  ClientWidth = 1376
   Color = clBtnHighlight
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,6 +13,7 @@ object Form1: TForm1
   Menu = MainMenu1
   OldCreateOrder = False
   OnClick = FormClick
+  OnClose = FormClose
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
@@ -22,7 +23,7 @@ object Form1: TForm1
     Height = 690
     Align = alRight
     TabOrder = 0
-    object SpeedButton1: TSpeedButton
+    object AddNodeBtn: TSpeedButton
       Left = 24
       Top = 24
       Width = 128
@@ -30,8 +31,9 @@ object Form1: TForm1
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
+      OnClick = AddNodeBtnClick
     end
-    object SpeedButton2: TSpeedButton
+    object AddLinkBtn: TSpeedButton
       Left = 24
       Top = 64
       Width = 128
@@ -39,6 +41,7 @@ object Form1: TForm1
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1077#1073#1088#1086
+      OnClick = AddLinkBtnClick
     end
     object SpeedButton3: TSpeedButton
       Left = 24

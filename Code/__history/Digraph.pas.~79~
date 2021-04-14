@@ -2,25 +2,20 @@ unit Digraph;
 
 interface
 
-uses System.Types;
+uses System.Types, DynStructures;
 
 type
+
   // Тип списка смежности
-  TPAdjList = ^TAdjList;
+  TPAdjList = TPList;
 
-  TAdjList = record
-    Elem: Integer;
-    Next: TPAdjList;
-  end;
-
-  // Тип вершинs графа
+  // Тип вершины графа
   TPNode = ^TNode;
 
   TNode = record
     Center: TPoint;
     Number: Cardinal;
     Head: TPAdjList;
-    Tail: TPAdjList;
     Next: TPNode;
   end;
 
@@ -28,7 +23,7 @@ type
   TGraph = record
     Head: TPNode;
     Tail: TPNode;
-    VG: Cardinal;
+    Order: Cardinal;
   end;
 
   { Функция нахождения вершины по номеру в списке }
@@ -46,8 +41,14 @@ procedure AddNode(var G: TGraph; const C: TPoint);
 { Процедура добавления рёбер в граф }
 procedure AddLink(var G: TGraph; u, v: Integer);
 
+{ Процедура инициализации графа }
+procedure InitializeGraph(var G: TGraph);
+
 { Процедура очищения графа }
 procedure DisposeGraph(var G: TGraph);
+
+{ Функция поиска в глубину }
+function DFS(const G: TGraph; u, v: Integer): Boolean;
 
 implementation
 
@@ -95,31 +96,32 @@ end;
 
 { Процедура добавления вершины в граф }
 procedure AddNode;
+var
+  t: TPNode;
 begin
-  Inc(G.VG);
+  Inc(G.Order);
 
-  // Инициализация указателя на новую вершину
-  if G.Tail = nil then
-    New(G.Tail)
-  else
-  begin
-    New(G.Tail.Next);
-    G.Tail := G.Tail.Next
-  end;
-
-  // Сохранение новой вершины
-  with G.Tail^ do
+  // Инициализация новой вершины
+  New(t);
+  with t^ do
   begin
     Center := C;
-    Number := G.VG;
+    Number := G.Order;
     Head := nil;
-    Tail := nil;
     Next := nil;
   end;
 
-  // Инициализация головы списка
-  if G.VG = 1 then
-    G.Head := G.Tail;
+  // Инициализация указателя на новую вершину
+  if G.Head = nil then
+  begin
+    G.Head := t;
+    G.Tail := t;
+  end
+  else
+  begin
+    G.Tail.Next := t;
+    G.Tail := t;
+  end;
 
 end;
 
@@ -127,33 +129,54 @@ end;
 procedure AddLink;
 var
   Node: TPNode;
-  i, Tmp: Integer;
+  a, b: TPList;
+  isFound: Boolean;
 begin
 
-  // Получение инцидентной вершины
+  // Получение начального соседа
   Node := GetByNumber(G, u);
 
-  with Node^ do
+  if Node.Head = nil then
   begin
+    New(Node.Head);
+    Node.Head.Elem := v;
+    Node.Head.Next := nil;
+  end
+  else
+  begin
+    a := Node.Head;
 
-    // Инициализация указателя на соседа
-    if Tail = nil then
-      New(Tail)
-    else
+    isFound := (a.Elem > v) or (a.Next = nil) or (a.Elem > v);
+    while not isFound do
     begin
-      New(Tail.Next);
-      Tail := Tail.Next;
+      a := a.Next;
+      isFound := (a.Next = nil) or (a.Elem > v);
     end;
 
-    // Инициализация головы списка соседей
-    if Head = nil then
-      Head := Tail;
+    New(b);
+    b.Elem := v;
 
-    // Сохранение соседа
-    Tail.Elem := v;
-    Tail.Next := nil;
+    if Node.Head.Elem > v then
+    begin
+      b.Next := a;
+      Node.Head := b;
+    end
+    else
+    begin
+      b.Next := a.Next;
+      a.Next := b;
+    end;
 
   end;
+
+end;
+
+{ Процедура инициализации графа }
+procedure InitializeGraph;
+begin
+  G.Head := nil;
+  G.Tail := nil;
+  G.Order := 0;
 end;
 
 { Процедура очищения графа }
@@ -179,6 +202,51 @@ begin
     G.Head := G.Head.Next;
     Dispose(pNode);
   end; // Конец А1
+end;
+
+function DFS(const G: TGraph; u, v: Integer): Boolean;
+var
+  Node: TPNode;
+  Neighbour: TPAdjList;
+  Stack: TStack;
+  isFound: Boolean;
+  isVisited: Array of Boolean;
+  i: Integer;
+  w: Cardinal;
+begin
+  isFound := u = v;
+
+  // Подготовка стека
+  InitList(Stack);
+  PushBack(Stack, u);
+
+  // Инициализация массива меток
+  SetLength(isVisited, G.Order);
+  for i := Low(isVisited) to High(isVisited) do
+    isVisited[i] := False;
+
+  // Цикл по стеку, пока не найдена вершина
+  while not(isEmpty(Stack) or isFound) do
+  begin
+
+    // Посещение вершины
+    u := PopBack(Stack);
+    isVisited[u] := true;
+
+    // Цикл по соседям вершины
+    Node := GetByNumber(G, u);
+    Neighbour := Node.Head;
+    while Neighbour <> nil do
+    begin
+      w := Neighbour.Elem;
+      if not isVisited[w] then
+        PushBack(Stack, w); // Добавление в стек непосещённых вершин
+      Neighbour := Neighbour.Next;
+    end;
+
+  end;
+
+  Result := isFound;
 end;
 
 end.

@@ -212,7 +212,7 @@ begin
   end; // Конец А1
 end;
 
-// TODO 1: Сохранять путь в очередь
+//TODO 1: Сохранять путь в очередь
 function DFS(const G: TGraph; u, v: Integer): Boolean;
 var
   Node: TPNode;
