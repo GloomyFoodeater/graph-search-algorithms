@@ -165,34 +165,22 @@ begin
           EndNode := GetByPoint(G, Pos);
           if (EndNode <> nil) then
           begin
-            // Получение пути с помощью алгоритма
             Path := DFS(G, StartNode.Number, EndNode.Number);
-
             if not isEmpty(Path) then
             begin
-
-              // Запись вспомогательного сообщения
               sPath := 'Найденный путь из вершины ' + IntToStr(StartNode.Number)
                 + ' в вершину ' + IntToStr(EndNode.Number) + ':'#13#10;
-
-              // Получение 1-го элемента пути
               sPath := sPath + IntToStr(Pop(Path));
             end
             else
-
-              // Вспомогательное сообщение о несуществовании пути
               sPath := 'Вершина ' + IntToStr(StartNode.Number) +
                 ' не достижима из вершины ' + IntToStr(EndNode.Number) + '.';
 
-            // Запись пути в строку
             while not isEmpty(Path) do
               sPath := sPath + '->' + IntToStr(Pop(Path));
 
-            // Вывод пути
             MessageBox(Handle, PChar(sPath),
               PChar('Результаты поиска в глубину'), MB_OK);
-
-            // Зануление концевых вершин
             StartNode := nil;
             EndNode := nil;
           end;

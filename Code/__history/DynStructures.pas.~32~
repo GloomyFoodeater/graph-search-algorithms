@@ -15,19 +15,19 @@ type
   TStack = TPList;
 
   { Процедура инициализации списка }
-procedure InitializeList(var Head: TPList);
+procedure InitializeList(var List: TPList);
 
 { Процедура очищения списка }
-procedure DestroyList(var Head: TPList);
+procedure DestroyList(var List: TPList);
 
 { Процедура вставки в стек }
-procedure Push(var Head: TStack; n: Integer);
+procedure Push(var Stack: TStack; n: Integer);
 
 { Функция извлечения из стека }
-function Pop(var Head: TStack): Cardinal;
+function Pop(var Stack: TStack): Cardinal;
 
 { Функция проверки списка на пустоту }
-function isEmpty(const Head: TPList): Boolean;
+function isEmpty(const List: TPList): Boolean;
 
 implementation
 
@@ -42,9 +42,9 @@ begin
   t.Next := nil;
 
   // Перемещение вершины стека
-  if not isEmpty(Head) then
-    t.Next := Head;
-  Head := t;
+  if not isEmpty(Stack) then
+    t.Next := Stack;
+  Stack := t;
 
 end;
 
@@ -53,11 +53,11 @@ var
   t: TStack; // Извлекаемый из стека элемент
 begin
 
-  if not isEmpty(Head) then
+  if not isEmpty(Stack) then
   begin
     // Перемещение вершины стека
-    t := Head;
-    Head := Head.Next;
+    t := Stack;
+    Stack := Stack.Next;
 
     // Извлечение элемента с очисткой указателя
     Result := t.Elem;
@@ -70,12 +70,12 @@ end;
 
 function isEmpty;
 begin
-  Result := Head = nil;
+  Result := List = nil;
 end;
 
 procedure InitializeList;
 begin
-  Head := nil;
+  List := nil;
 end;
 
 procedure DestroyList;

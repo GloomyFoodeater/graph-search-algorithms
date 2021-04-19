@@ -168,7 +168,7 @@ end;
 procedure DestroyGraph;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  AdjNode: TPAdjList;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -179,9 +179,9 @@ begin
     // Цикл А2. Освобождение списка соседей вершины
     while Node.Head <> nil do
     begin
-      Neighbour := Node.Head;
+      AdjNode := Node.Head;
       Node.Head := Node.Head.Next;
-      Dispose(Neighbour);
+      Dispose(AdjNode);
     end; // Конец А2
 
     G.Head := G.Head.Next;

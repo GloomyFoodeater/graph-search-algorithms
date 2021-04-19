@@ -58,15 +58,14 @@ begin
 end;
 
 function GetByNumber;
+var
+  i: Integer;
 begin
   Result := G.Head;
-
-  // Цикл А1. Поиск вершины с данным номером
   while Result.Number <> v do
   begin
     Result := Result.Next;
-  end; // Конец А1
-
+  end;
 end;
 
 function GetByPoint;
@@ -138,7 +137,11 @@ begin
 
   // Список смежности был пуст или голова была больше нового соседа
   if (Prev = nil) or (Prev.Elem > v) then
-    Push(Node.Head, v)
+  begin
+    { Curr.Next := Prev;
+      Node.Head := Curr; }
+    Push(Node.Head, v);
+  end
   else
   begin
 
@@ -168,7 +171,7 @@ end;
 procedure DestroyGraph;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  AdjNode: TPAdjList;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -179,9 +182,9 @@ begin
     // Цикл А2. Освобождение списка соседей вершины
     while Node.Head <> nil do
     begin
-      Neighbour := Node.Head;
+      AdjNode := Node.Head;
       Node.Head := Node.Head.Next;
-      Dispose(Neighbour);
+      Dispose(AdjNode);
     end; // Конец А2
 
     G.Head := G.Head.Next;
@@ -190,17 +193,29 @@ begin
 end;
 
 function RestorePath(const Parents: array of Cardinal; u, v: Integer): TPList;
+var
+  ReversedPath: TStack; // Пройденный путь в обратном порятке
 begin
 
-  InitializeList(Result); // Инициализация стека
+  InitializeList(ReversedPath); // Инициализация стека
 
   // Цикл А1. Добавление очередного предка в пути
   while u <> v do
   begin
-    Push(Result, v);
+    Push(ReversedPath, v);
     v := Parents[v - 1];
   end; // Конец А1
+
+  // Цикл А2. Инициализация строки с путём
+  InitializeList(Result);
   Push(Result, u);
+  while not isEmpty(ReversedPath) do
+  begin
+    v := Pop(ReversedPath);
+    Push(Result, v);
+  end; // Конец А2
+
+  DestroyList(ReversedPath); // Очистка стека
 
 end;
 
@@ -261,10 +276,14 @@ begin
 
   DestroyList(Stack); // Очистка стека
 
-  // Восстановление пути
   InitializeList(Result);
+  // Вывод найденного пути
   if isFound then
     Result := RestorePath(Parents, StartCopy, v);
+  { Result := 'Найденный путь из вершины ' + IntToStr(StartCopy) + ' в вершину '
+    + IntToStr(v) + ':'#13#10 + RestorePath(Parents, StartCopy, v) }
+  { Result := 'Вершина ' + IntToStr(v) + ' не достижима из вершины ' +
+    IntToStr(StartCopy) + '.'; }
 end;
 
 end.

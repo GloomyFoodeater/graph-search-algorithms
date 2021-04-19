@@ -14,23 +14,15 @@ type
   // Тип стека с целыми числами
   TStack = TPList;
 
-  { Процедура инициализации списка }
-procedure InitializeList(var Head: TPList);
-
-{ Процедура очищения списка }
-procedure DestroyList(var Head: TPList);
-
-{ Процедура вставки в стек }
-procedure Push(var Head: TStack; n: Integer);
-
-{ Функция извлечения из стека }
-function Pop(var Head: TStack): Cardinal;
-
-{ Функция проверки списка на пустоту }
-function isEmpty(const Head: TPList): Boolean;
+procedure InitList(var List: TPList);
+procedure DestroyList(var List: TPList);
+procedure Push(var Stack: TStack; n: Integer);
+function Pop(var Stack: TStack): Cardinal;
+function isEmpty(const List: TPList): Boolean;
 
 implementation
 
+{ Процедура добавления элемента в стек }
 procedure Push;
 var
   t: TStack; // Добавляемый элемент стека
@@ -42,22 +34,23 @@ begin
   t.Next := nil;
 
   // Перемещение вершины стека
-  if not isEmpty(Head) then
-    t.Next := Head;
-  Head := t;
+  if not isEmpty(Stack) then
+    t.Next := Stack;
+  Stack := t;
 
 end;
 
+{ Функция извлечения значения вершины стека с удалением }
 function Pop;
 var
   t: TStack; // Извлекаемый из стека элемент
 begin
 
-  if not isEmpty(Head) then
+  if not isEmpty(Stack) then
   begin
     // Перемещение вершины стека
-    t := Head;
-    Head := Head.Next;
+    t := Stack;
+    Stack := Stack.Next;
 
     // Извлечение элемента с очисткой указателя
     Result := t.Elem;
@@ -68,21 +61,23 @@ begin
 
 end;
 
+{ Функция проверки динамической структуры на пустоту }
 function isEmpty;
 begin
-  Result := Head = nil;
+  Result := List = nil;
 end;
 
-procedure InitializeList;
+{ Процедура инициализации списка }
+procedure InitList;
 begin
-  Head := nil;
+  List := nil;
 end;
 
 procedure DestroyList;
 var
   t: TPList;
 begin
-  // TODO 1: Добавить очистку списка
+  //TODO 1: Добавить очистку списка
 end;
 
 end.

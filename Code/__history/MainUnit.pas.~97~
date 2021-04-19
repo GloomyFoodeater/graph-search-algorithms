@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph, DynStructures;
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph;
 
 type
   TForm1 = class(TForm)
@@ -69,20 +69,20 @@ begin
 end;
 
 { Процедура рисования вершины графа }
-procedure DrawNode(u: Integer; Center: TPoint);
+procedure DrawNode(v: Integer; Center: TPoint);
 var
   Caption: String; // Имя вершины
   PosX: Integer; // Левый верхний край текста
-  Copy: Integer; // Копия номера вершины
+  vCopy: Integer; // Копия номера вершины
 begin
 
   // Получение имени вершины и его x-координаты
-  Str(u, Caption);
-  Copy := u;
+  Str(v, Caption);
+  vCopy := v;
   PosX := Center.x;
-  while Copy <> 0 do
+  while vCopy <> 0 do
   begin
-    Copy := Copy div 10;
+    vCopy := vCopy div 10;
     PosX := PosX - 4;
   end;
 
@@ -117,8 +117,6 @@ var
   Pos: TPoint;
   EndNode: TPNode;
   d: Integer;
-  Path: TPList;
-  sPath: String;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -165,34 +163,9 @@ begin
           EndNode := GetByPoint(G, Pos);
           if (EndNode <> nil) then
           begin
-            // Получение пути с помощью алгоритма
-            Path := DFS(G, StartNode.Number, EndNode.Number);
 
-            if not isEmpty(Path) then
-            begin
-
-              // Запись вспомогательного сообщения
-              sPath := 'Найденный путь из вершины ' + IntToStr(StartNode.Number)
-                + ' в вершину ' + IntToStr(EndNode.Number) + ':'#13#10;
-
-              // Получение 1-го элемента пути
-              sPath := sPath + IntToStr(Pop(Path));
-            end
-            else
-
-              // Вспомогательное сообщение о несуществовании пути
-              sPath := 'Вершина ' + IntToStr(StartNode.Number) +
-                ' не достижима из вершины ' + IntToStr(EndNode.Number) + '.';
-
-            // Запись пути в строку
-            while not isEmpty(Path) do
-              sPath := sPath + '->' + IntToStr(Pop(Path));
-
-            // Вывод пути
-            MessageBox(Handle, PChar(sPath),
-              PChar('Результаты поиска в глубину'), MB_OK);
-
-            // Зануление концевых вершин
+            MessageBox(Handle, PChar(DFS(G, StartNode.Number, EndNode.Number)),
+              PChar('Search results'), MB_OK);
             StartNode := nil;
             EndNode := nil;
           end;
@@ -211,7 +184,7 @@ end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  DestroyGraph(G);
+  DisposeGraph(G);
 end;
 
 procedure TForm1.DFSBtnClick(Sender: TObject);

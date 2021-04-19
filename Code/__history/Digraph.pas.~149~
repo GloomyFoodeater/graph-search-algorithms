@@ -58,15 +58,14 @@ begin
 end;
 
 function GetByNumber;
+var
+  i: Integer;
 begin
   Result := G.Head;
-
-  // Цикл А1. Поиск вершины с данным номером
   while Result.Number <> v do
   begin
     Result := Result.Next;
-  end; // Конец А1
-
+  end;
 end;
 
 function GetByPoint;
@@ -138,7 +137,11 @@ begin
 
   // Список смежности был пуст или голова была больше нового соседа
   if (Prev = nil) or (Prev.Elem > v) then
-    Push(Node.Head, v)
+  begin
+    { Curr.Next := Prev;
+      Node.Head := Curr; }
+    Push(Node.Head, v);
+  end
   else
   begin
 
@@ -168,7 +171,7 @@ end;
 procedure DestroyGraph;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  AdjNode: TPAdjList;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -179,9 +182,9 @@ begin
     // Цикл А2. Освобождение списка соседей вершины
     while Node.Head <> nil do
     begin
-      Neighbour := Node.Head;
+      AdjNode := Node.Head;
       Node.Head := Node.Head.Next;
-      Dispose(Neighbour);
+      Dispose(AdjNode);
     end; // Конец А2
 
     G.Head := G.Head.Next;
