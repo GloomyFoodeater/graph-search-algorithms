@@ -49,46 +49,6 @@ function isEmpty(const Head: TPList): Boolean;
 
 implementation
 
-procedure InitializeStack;
-begin
-  Stack := nil;
-end;
-
-procedure InitializeQueue;
-begin
-  Queue.Head := nil;
-  Queue.Tail := nil;
-end;
-
-procedure DestroyStack;
-var
-  t: TPList;
-begin
-  // Цикл А1. Освобождение списка
-  while Stack <> nil do
-  begin
-    t := Stack;
-    Stack := Stack.Next;
-    Dispose(t);
-  end; // Конец А1
-  Stack := nil;
-end;
-
-procedure DestroyQueue;
-var
-  t: TPList;
-begin
-  // Цикл А1. Освобождение списка
-  while Queue.Head <> nil do
-  begin
-    t := Queue.Head;
-    Queue.Head := Queue.Head.Next;
-    Dispose(t);
-  end; // Конец А1
-  Queue.Head := nil;
-  Queue.Tail := nil;
-end;
-
 procedure Push;
 var
   t: TPList; // Вставляемое звено списка
@@ -171,6 +131,46 @@ end;
 function isEmpty;
 begin
   Result := Head = nil;
+end;
+
+procedure InitializeStack;
+begin
+  Stack := nil;
+end;
+
+procedure InitializeQueue;
+begin
+  Queue.Head := nil;
+  Queue.Tail := nil;
+end;
+
+procedure DestroyStack;
+var
+  t: TPList;
+begin
+  // Цикл А1. Освобождение списка
+  while Stack <> nil do
+  begin
+    t := Stack;
+    Stack := Stack.Next;
+    Dispose(t);
+  end; // Конец А1
+  Stack := nil;
+end;
+
+procedure DestroyQueue;
+var
+  t: TPList;
+begin
+  // Цикл А1. Освобождение списка
+  while Queue.Head <> nil do
+  begin
+    t := Queue.Head;
+    Queue.Head := Queue.Head.Next;
+    Dispose(t);
+  end; // Конец А1
+  Queue.Head := nil;
+  Queue.Tail := nil;
 end;
 
 end.

@@ -156,10 +156,7 @@ begin
 
   // Список смежности был пуст или голова была больше нового соседа
   if (Prev = nil) or (Prev.Elem > v) then
-  begin
-    Curr.Next := Prev;
-    Node.Head := Curr;
-  end
+    Push(Node.Head, v)
   else
   begin
 
@@ -304,6 +301,8 @@ var
   w: Cardinal;
   isFound: Boolean;
 begin
+  // Получение информации о начальной вершине
+  Node := GetByNumber(G, u);
 
   // Инициализация очереди
   InitializeQueue(Queue);
@@ -350,11 +349,6 @@ begin
 
   // Очистка очереди
   DestroyQueue(Queue);
-
-  // Восстановление пути
-  InitializeStack(Result);
-  if isFound then
-    Result := RestorePath(Parents, StartCopy, v);
 
 end;
 

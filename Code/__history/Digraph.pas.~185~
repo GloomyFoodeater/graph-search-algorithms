@@ -48,10 +48,10 @@ procedure InitializeGraph(var G: TGraph);
 procedure DestroyGraph(var G: TGraph);
 
 { Функция поиска в глубину }
-function DFS(const G: TGraph; u, v: Cardinal): TStack;
+function DFS(const G: TGraph; u, v: Cardinal): TPList;
 
 { Функция поиска в ширину }
-function BFS(const G: TGraph; u, v: Cardinal): TStack;
+function BFS(const G: TGraph; u, v: Cardinal): TPList;
 
 implementation
 
@@ -156,10 +156,7 @@ begin
 
   // Список смежности был пуст или голова была больше нового соседа
   if (Prev = nil) or (Prev.Elem > v) then
-  begin
-    Curr.Next := Prev;
-    Node.Head := Curr;
-  end
+    Push(Node.Head, v)
   else
   begin
 
@@ -210,7 +207,7 @@ begin
   end; // Конец А1
 end;
 
-function RestorePath(const Parents: array of Cardinal; u, v: Integer): TStack;
+function RestorePath(const Parents: array of Cardinal; u, v: Integer): TPList;
 begin
 
   InitializeStack(Result); // Инициализация стека
@@ -304,6 +301,8 @@ var
   w: Cardinal;
   isFound: Boolean;
 begin
+  // Получение информации о начальной вершине
+  Node := GetByNumber(G, u);
 
   // Инициализация очереди
   InitializeQueue(Queue);
@@ -338,24 +337,13 @@ begin
         w := Neighbour.Elem;
         if not isVisited[w - 1] then
         begin
-          Enqueue(Queue, w); // Запись в очередь
-          Parents[w - 1] := u; // Сохранение пути
-        end; // Конец if
+          Enqueue(Queue, w);
+          Parents[w - 1] := u;
+        end;
         Neighbour := Neighbour.Next;
-      end; // Конец А2
-
-    end; // Конец if
-
-  end; // Конец А1
-
-  // Очистка очереди
-  DestroyQueue(Queue);
-
-  // Восстановление пути
-  InitializeStack(Result);
-  if isFound then
-    Result := RestorePath(Parents, StartCopy, v);
-
+      end;
+    end;
+  end;
 end;
 
 end.

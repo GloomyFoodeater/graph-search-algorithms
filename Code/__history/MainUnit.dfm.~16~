@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 389
   Top = 123
-  Caption = #1055#1086#1080#1089#1082' '#1074' '#1075#1088#1072#1092#1072#1093
+  Caption = 'Graph Search'
   ClientHeight = 690
   ClientWidth = 1376
   Color = clBtnHighlight
@@ -69,18 +69,17 @@ object Form1: TForm1
       Height = 30
       AllowAllUp = True
       GroupIndex = 1
-      Caption = #1055#1086#1080#1089#1082' '#1074' '#1075#1083#1091#1073#1080#1085#1091
+      Caption = #1054#1073#1093#1086#1076' '#1074' '#1075#1083#1091#1073#1080#1085#1091
       OnClick = DFSBtnClick
     end
-    object BFSbtn: TSpeedButton
+    object SpeedButton6: TSpeedButton
       Left = 24
       Top = 392
       Width = 128
       Height = 30
       AllowAllUp = True
       GroupIndex = 1
-      Caption = #1055#1086#1080#1089#1082' '#1074' '#1096#1080#1088#1080#1085#1091
-      OnClick = BFSbtnClick
+      Caption = #1054#1073#1093#1086#1076' '#1074' '#1096#1080#1088#1080#1085#1091
     end
     object SpeedButton7: TSpeedButton
       Left = 24
@@ -89,16 +88,15 @@ object Form1: TForm1
       Height = 30
       AllowAllUp = True
       GroupIndex = 1
-      Caption = #1055#1086#1080#1089#1082' '#1044#1077#1081#1082#1089#1090#1088#1099
+      Caption = #1053#1072#1081#1090#1080' '#1082#1088#1072#1090#1095#1072#1081#1096#1080#1081' '#1087#1091#1090#1100
     end
     object Button1: TButton
-      Left = 24
+      Left = 48
       Top = 552
-      Width = 121
-      Height = 41
-      Caption = #1057#1086#1079#1076#1072#1090#1100' '#1087#1088#1086#1080#1079#1074#1086#1083#1100#1085#1099#1081' '#1075#1088#1072#1092
+      Width = 75
+      Height = 25
+      Caption = 'Sample'
       TabOrder = 0
-      WordWrap = True
       OnClick = Button1Click
     end
   end
