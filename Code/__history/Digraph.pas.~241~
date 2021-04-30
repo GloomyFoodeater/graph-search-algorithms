@@ -41,6 +41,12 @@ procedure AddNode(var G: TGraph; const C: TPoint);
 { Процедура добавления рёбер в граф }
 procedure AddLink(var G: TGraph; u, v: Cardinal);
 
+{ Процедура удаления вершины из графа }
+procedure DeleteNode(var G: TGraph; u: Cardinal);
+
+{ Процедура удаления ребра из графа }
+procedure DeleteLink(var G: TGraph; u, v: Cardinal);
+
 { Процедура инициализации графа }
 procedure InitializeGraph(var G: TGraph);
 
@@ -52,6 +58,9 @@ function DFS(const G: TGraph; u, v: Cardinal): TStack;
 
 { Функция поиска в ширину }
 function BFS(const G: TGraph; u, v: Cardinal): TStack;
+
+{ Функция поиска алгоритмом Дейкстры }
+function Dijkstra(const G: TGraph; u, v: Cardinal): TStack;
 
 implementation
 
@@ -156,7 +165,10 @@ begin
 
   // Список смежности был пуст или голова была больше нового соседа
   if (Prev = nil) or (Prev.Elem > v) then
-    Push(Node.Head, v)
+  begin
+    Curr.Next := Prev;
+    Node.Head := Curr;
+  end
   else
   begin
 
@@ -173,6 +185,55 @@ begin
     Prev.Next := Curr;
 
   end; // Конец if
+
+end;
+
+procedure DeleteNode;
+begin
+
+end;
+
+procedure DeleteLink;
+var
+  Node: TPNode;
+  Neighbour: TPList;
+  DelNeighbour: TPList;
+  isFound: Boolean;
+begin
+
+  // Получение начала дуги
+  Node := GetByNumber(G, u);
+
+  // Получение первого соседа
+  Neighbour := Node.Head;
+
+  // Поиск звена перед звеном с искомым соседом
+  if (Neighbour = nil) or (Neighbour.Elem = v) then
+  begin
+    DelNeighbour := Neighbour;
+    Node.Head := DelNeighbour.Next
+  end
+  else
+  begin
+
+    isFound := (Neighbour.Next.Elem = v) or (Neighbour = nil);
+
+    // Получение предыдущего соседа удаляемого
+    while not isFound do
+    begin
+      Neighbour := Neighbour.Next;
+      isFound := (Neighbour = nil) or (Neighbour.Next.Elem = v);
+    end;
+
+    DelNeighbour := Neighbour.Next;
+    Neighbour.Next := DelNeighbour.Next;
+  end;
+
+  // Удаление соседа
+  if not(DelNeighbour = nil) then
+  begin
+    Dispose(DelNeighbour);
+  end;
 
 end;
 
@@ -265,7 +326,8 @@ begin
       Neighbour := Node.Head;
       while not((Neighbour = nil) or isFound) do
       begin
-        w := Neighbour.Elem; // Получение очередного соседа
+        w := Neighbour.Elem;
+        // Получение очередного соседа
 
         // Добавление в стек непосещённых вершин
         if not isVisited[w - 1] then
@@ -294,15 +356,13 @@ var
   Node: TPNode;
   Neighbour: TPAdjList;
   Queue: TQueue;
-  i: Integer;
+  i: Cardinal;
   isVisited: Array of Boolean;
   Parents: Array of Cardinal;
   StartCopy: Cardinal;
   w: Cardinal;
   isFound: Boolean;
 begin
-  // Получение информации о начальной вершине
-  Node := GetByNumber(G, u);
 
   // Инициализация очереди
   InitializeQueue(Queue);
@@ -354,6 +414,21 @@ begin
   InitializeStack(Result);
   if isFound then
     Result := RestorePath(Parents, StartCopy, v);
+
+end;
+
+function Dijkstra;
+var
+  Node: TPNode;
+  Neighbour: TPAdjList;
+  isVisited: Boolean;
+  Marks: Array of Cardinal;
+  i: Cardinal;
+  w: Cardinal;
+  Parents: Array of Cardinal;
+  StartCopy: Cardinal;
+  isFound: Boolean;
+begin
 
 end;
 

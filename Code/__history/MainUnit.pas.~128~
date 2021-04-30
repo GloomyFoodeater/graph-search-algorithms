@@ -12,7 +12,7 @@ type
     AddNodeBtn: TSpeedButton;
     AddLinkBtn: TSpeedButton;
     SpeedButton3: TSpeedButton;
-    SpeedButton4: TSpeedButton;
+    DeleteLinkBtn: TSpeedButton;
     MainMenu1: TMainMenu;
     N1: TMenuItem;
     N2: TMenuItem;
@@ -24,7 +24,7 @@ type
     N8: TMenuItem;
     N9: TMenuItem;
     DFSBtn: TSpeedButton;
-    SpeedButton6: TSpeedButton;
+    BFSbtn: TSpeedButton;
     SpeedButton7: TSpeedButton;
     Button1: TButton;
     procedure FormClick(Sender: TObject);
@@ -33,6 +33,8 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DFSBtnClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure BFSbtnClick(Sender: TObject);
+    procedure DeleteLinkBtnClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -154,9 +156,25 @@ begin
       end;
     stDeleteLink:
       begin
-
+        if StartNode = 0 then
+        begin
+          Centralize(G, Pos, StartNode);
+        end
+        else
+        begin
+          Centralize(G, Pos, EndNode);
+          if (EndNode <> 0) and (StartNode <> EndNode) then
+          begin
+            Canvas.Pen.Color := clWhite;
+            DrawLink(G, StartNodeCenter, Pos);
+            Canvas.Pen.Color := clWhite;
+            DeleteLink(G, StartNode, EndNode);
+            StartNode := 0;
+            EndNode := 0;
+          end;
+        end;
       end;
-    stDFS:
+    stDFS, stBFS:
       begin
         if StartNode = 0 then
         begin
@@ -168,8 +186,12 @@ begin
           Centralize(G, Pos, EndNode);
           if (EndNode <> 0) then
           begin
+
             // Получение пути с помощью алгоритма
-            Path := DFS(G, StartNode, EndNode);
+            if State = stDFS then
+              Path := DFS(G, StartNode, EndNode) // Поиск в глубину
+            else
+              Path := BFS(G, StartNode, EndNode); // Поиск в ширину
 
             if not isEmpty(Path) then
             begin
@@ -200,10 +222,6 @@ begin
           end;
         end;
       end;
-    stBFS:
-      begin
-
-      end;
     stDijkstra:
       begin
 
@@ -214,6 +232,24 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.DeleteLinkBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DeleteLinkBtn.Down then
+    State := stDeleteLink
+  else
+    State := stNone;
+end;
+
+procedure TForm1.BFSbtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if BFSbtn.Down then
+    State := stBFS
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DFSBtnClick(Sender: TObject);
@@ -259,7 +295,7 @@ begin
   for i := 2 to 5 do
   begin
     AddLink(G, 1, i);
-    DrawLink(G, GetByNumber(G, 1).Center, GetByNumber(G, i).Center);
+    DrawLink(G, GetCenter(G, 1), GetCenter(G, i));
   end;
   Button1.Visible := false;
 end;

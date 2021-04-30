@@ -41,6 +41,12 @@ procedure AddNode(var G: TGraph; const C: TPoint);
 { Процедура добавления рёбер в граф }
 procedure AddLink(var G: TGraph; u, v: Cardinal);
 
+{ Процедура удаления вершины из графа }
+procedure DeleteNode(var G: TGraph; u: Cardinal);
+
+{ Процедура удаления ребра из графа }
+procedure DeleteLink(var G: TGraph; u, v: Cardinal);
+
 { Процедура инициализации графа }
 procedure InitializeGraph(var G: TGraph);
 
@@ -52,6 +58,9 @@ function DFS(const G: TGraph; u, v: Cardinal): TStack;
 
 { Функция поиска в ширину }
 function BFS(const G: TGraph; u, v: Cardinal): TStack;
+
+{ Функция поиска алгоритмом Дейкстры }
+function Dijkstra(const G: TGraph; u, v: Cardinal): TStack;
 
 implementation
 
@@ -179,6 +188,55 @@ begin
 
 end;
 
+procedure DeleteNode;
+begin
+
+end;
+
+procedure DeleteLink;
+var
+  Node: TPNode;
+  Neighbour: TPList;
+  DelNeighbour: TPList;
+  isFound: Boolean;
+begin
+
+  // Получение начала дуги
+  Node := GetByNumber(G, u);
+
+  // Получение первого соседа
+  Neighbour := Node.Head;
+
+  // Поиск звена перед звеном с искомым соседом
+  if (Neighbour = nil) or (Neighbour.Elem = v) then
+  begin
+    DelNeighbour := Neighbour;
+    Node.Head := DelNeighbour.Next
+  end
+  else
+  begin
+
+    isFound := (Neighbour.Next.Elem = v) or (Neighbour = nil);
+
+    // Получение предыдущего соседа удаляемого
+    while not isFound do
+    begin
+      Neighbour := Neighbour.Next;
+      isFound := (Neighbour = nil) or (Neighbour.Next.Elem = v);
+    end;
+
+    DelNeighbour := Neighbour.Next;
+    Neighbour.Next := DelNeighbour.Next;
+  end;
+
+  // Удаление соседа
+  if not(DelNeighbour = nil) then
+  begin
+    Dispose(DelNeighbour);
+  end;
+
+end;
+
 procedure InitializeGraph;
 begin
   G.Head := nil;
@@ -268,7 +326,8 @@ begin
       Neighbour := Node.Head;
       while not((Neighbour = nil) or isFound) do
       begin
-        w := Neighbour.Elem; // Получение очередного соседа
+        w := Neighbour.Elem;
+        // Получение очередного соседа
 
         // Добавление в стек непосещённых вершин
         if not isVisited[w - 1] then
@@ -297,7 +356,7 @@ var
   Node: TPNode;
   Neighbour: TPAdjList;
   Queue: TQueue;
-  i: Integer;
+  i: Cardinal;
   isVisited: Array of Boolean;
   Parents: Array of Cardinal;
   StartCopy: Cardinal;
@@ -350,6 +409,44 @@ begin
 
   // Очистка очереди
   DestroyQueue(Queue);
+
+  // Восстановление пути
+  InitializeStack(Result);
+  if isFound then
+    Result := RestorePath(Parents, StartCopy, v);
+
+end;
+
+function Dijkstra;
+const
+  INFINITY: Cardinal = MaxInt; //TODO: Max cardinal
+var
+  Node: TPNode;
+  Neighbour: TPAdjList;
+  isVisited: Array of Boolean;
+  Marks: Array of Cardinal;
+  i: Cardinal;
+  w: Cardinal;
+  Parents: Array of Cardinal;
+  StartCopy: Cardinal;
+  isFound: Boolean;
+begin
+
+  // Инициализация меток
+  for i := Low(Marks) to High(Marks) do
+    Marks[i] := INFINITY;
+  Marks[u] := 0;
+
+  // Инициализация массива меток
+  SetLength(isVisited, G.Order);
+  for i := Low(isVisited) to High(isVisited) do
+    isVisited[i] := False;
+
+  // Инициализация массива предков
+  SetLength(Parents, G.Order);
+
+  StartCopy := u;
+  isFound := u = v;
 
   // Восстановление пути
   InitializeStack(Result);

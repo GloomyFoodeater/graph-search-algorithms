@@ -24,7 +24,7 @@ type
     N8: TMenuItem;
     N9: TMenuItem;
     DFSBtn: TSpeedButton;
-    SpeedButton6: TSpeedButton;
+    BFSbtn: TSpeedButton;
     SpeedButton7: TSpeedButton;
     Button1: TButton;
     procedure FormClick(Sender: TObject);
@@ -33,6 +33,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DFSBtnClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure BFSbtnClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -156,7 +157,7 @@ begin
       begin
 
       end;
-    stDFS:
+    stDFS, stBFS:
       begin
         if StartNode = 0 then
         begin
@@ -168,8 +169,12 @@ begin
           Centralize(G, Pos, EndNode);
           if (EndNode <> 0) then
           begin
+
             // Получение пути с помощью алгоритма
-            Path := DFS(G, StartNode, EndNode);
+            if State = stDFS then
+              Path := DFS(G, StartNode, EndNode) // Поиск в глубину
+            else
+              Path := BFS(G, StartNode, EndNode); // Поиск в ширину
 
             if not isEmpty(Path) then
             begin
@@ -200,10 +205,6 @@ begin
           end;
         end;
       end;
-    stBFS:
-      begin
-
-      end;
     stDijkstra:
       begin
 
@@ -214,6 +215,15 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.BFSbtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if BFSbtn.Down then
+    State := stBFS
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DFSBtnClick(Sender: TObject);
