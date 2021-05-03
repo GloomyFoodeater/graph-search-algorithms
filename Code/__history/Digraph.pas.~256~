@@ -26,6 +26,8 @@ type
     Order: Cardinal;
   end;
 
+  TAdjMatrix = array of array of Boolean;
+
   { Функция нахождения вершины и её координаты по точке на холсте }
 procedure Centralize(const G: TGraph; var P: TPoint; out u: Cardinal);
 
@@ -61,6 +63,9 @@ function BFS(const G: TGraph; u, v: Cardinal): TStack;
 
 { Функция поиска алгоритмом Дейкстры }
 function Dijkstra(const G: TGraph; u, v: Cardinal): TStack;
+
+{ Процедура преобразования графа в матрицу смежности }
+procedure ToAdjMatrix(const G: TGraph; var Matrix: TAdjMatrix);
 
 implementation
 
@@ -189,8 +194,82 @@ begin
 end;
 
 procedure DeleteNode;
+var
+  PrNode, Node: TPNode;
+  PrNeighbour, Neighbour: TPList;
+
 begin
 
+  // Проверка корректности полученных данных
+  if (u < 1) or (u > G.Order) then
+    Exit;
+  Dec(G.Order);
+
+  // Цикл А1. Проход по вершинам
+  PrNode := nil;
+  Node := G.Head;
+  while Node <> nil do
+  begin
+
+    // Проверка номера вершины
+    if Node.Number = u then
+    begin
+
+      // Переназначение предыдущего указателя
+      if PrNode = nil then
+        G.Head := Node.Next
+      else
+        PrNode.Next := Node.Next;
+
+      // Освобождение списка смежности
+      DestroyList(Node.Head);
+      Dispose(Node);
+    end
+    else
+    begin
+
+      // Уменьшение всех вершин, больших удаляемой на 1
+      if Node.Number > u then
+        Dec(Node.Number);
+
+      // Цикл А2. Проход по соседям вершины
+      PrNeighbour := nil;
+      Neighbour := Node.Head;
+      while Neighbour <> nil do
+      begin
+
+        // Проверка номера соседа
+        if Neighbour.Elem = u then
+        begin
+
+          // Переназначение предыдущего указателя
+          if PrNeighbour = nil then
+            Node.Head := Neighbour.Next
+          else
+            PrNeighbour.Next := Neighbour.Next;
+
+          // Освобождение памяти звена списка
+          Dispose(Neighbour);
+        end
+        else if Neighbour.Elem > u then
+          Dec(Neighbour.Elem);
+
+        // Переход к следующему соседу
+        PrNeighbour := Neighbour;
+        Neighbour := Neighbour.Next;
+
+      end;
+
+    end;
+
+    // Переход к следующей вершине
+    if Node.Next <> nil then
+      PrNode := Node;
+    Node := Node.Next;
+  end; // Конец А1
+
+  // Переназначение хвоста списка
+  G.Tail := PrNode;
 end;
 
 procedure DeleteLink;
@@ -247,7 +326,6 @@ end;
 procedure DestroyGraph;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -256,12 +334,7 @@ begin
     Node := G.Head;
 
     // Цикл А2. Освобождение списка соседей вершины
-    while Node.Head <> nil do
-    begin
-      Neighbour := Node.Head;
-      Node.Head := Node.Head.Next;
-      Dispose(Neighbour);
-    end; // Конец А2
+    DestroyList(Node.Head);
 
     G.Head := G.Head.Next;
     Dispose(Node);
@@ -343,7 +416,7 @@ begin
 
   end; // Конец А1
 
-  DestroyStack(Stack); // Очистка стека
+  DestroyList(Stack); // Очистка стека
 
   // Восстановление пути
   InitializeStack(Result);
@@ -408,7 +481,7 @@ begin
   end; // Конец А1
 
   // Очистка очереди
-  DestroyQueue(Queue);
+  DestroyList(Queue.Head);
 
   // Восстановление пути
   InitializeStack(Result);
@@ -419,7 +492,7 @@ end;
 
 function Dijkstra;
 const
-  INFINITY: Cardinal = MaxInt; //TODO: Max cardinal
+  INFINITY: Cardinal = MaxInt; // TODO: Max cardinal
 var
   Node: TPNode;
   Neighbour: TPAdjList;
@@ -435,6 +508,7 @@ begin
   // Инициализация меток
   for i := Low(Marks) to High(Marks) do
     Marks[i] := INFINITY;
+  Marks[u] := 0;
 
   // Инициализация массива меток
   SetLength(isVisited, G.Order);
@@ -452,6 +526,32 @@ begin
   if isFound then
     Result := RestorePath(Parents, StartCopy, v);
 
+end;
+
+procedure ToAdjMatrix;
+var
+  i: Integer;
+  Node: TPNode;
+  Neighbour: TPList;
+  j: Integer;
+begin
+  SetLength(Matrix, G.Order, G.Order);
+  Node := G.Head;
+  for i := 0 to G.Order - 1 do
+  begin
+    Neighbour := Node.Head;
+    for j := 0 to G.Order - 1 do
+    begin
+      if (Neighbour <> nil) and (Neighbour.Elem = j + 1) then
+      begin
+        Matrix[i, j] := true;
+        Neighbour := Neighbour.Next;
+      end
+      else
+        Matrix[i, j] := False;
+    end;
+    Node := Node.Next;
+  end;
 end;
 
 end.

@@ -44,7 +44,7 @@ object Form1: TForm1
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1077#1073#1088#1086
       OnClick = AddLinkBtnClick
     end
-    object SpeedButton3: TSpeedButton
+    object DeleteNodeBtn: TSpeedButton
       Left = 24
       Top = 112
       Width = 128
@@ -52,6 +52,7 @@ object Form1: TForm1
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
+      OnClick = DeleteNodeBtnClick
     end
     object DeleteLinkBtn: TSpeedButton
       Left = 24

@@ -26,11 +26,8 @@ procedure InitializeStack(var Stack: TStack);
 { Процедура инициализации очереди }
 procedure InitializeQueue(var Queue: TQueue);
 
-{ Процедура очищения стека }
-procedure DestroyStack(var Stack: TStack);
-
-{ Процедура очистки очереди }
-procedure DestroyQueue(var Queue: TQueue);
+{ Процедура очищения списка }
+procedure DestroyList(var Head: TPList);
 
 { Процедура вставки в стек }
 procedure Push(var Stack: TStack; n: Cardinal);
@@ -60,33 +57,18 @@ begin
   Queue.Tail := nil;
 end;
 
-procedure DestroyStack;
+procedure DestroyList;
 var
   t: TPList;
 begin
   // Цикл А1. Освобождение списка
-  while Stack <> nil do
+  while Head <> nil do
   begin
-    t := Stack;
-    Stack := Stack.Next;
+    t := Head;
+    Head := Head.Next;
     Dispose(t);
   end; // Конец А1
-  Stack := nil;
-end;
-
-procedure DestroyQueue;
-var
-  t: TPList;
-begin
-  // Цикл А1. Освобождение списка
-  while Queue.Head <> nil do
-  begin
-    t := Queue.Head;
-    Queue.Head := Queue.Head.Next;
-    Dispose(t);
-  end; // Конец А1
-  Queue.Head := nil;
-  Queue.Tail := nil;
+  Head := nil;
 end;
 
 procedure Push;

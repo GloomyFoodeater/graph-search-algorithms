@@ -11,7 +11,7 @@ type
     Panel1: TPanel;
     AddNodeBtn: TSpeedButton;
     AddLinkBtn: TSpeedButton;
-    SpeedButton3: TSpeedButton;
+    DeleteNodeBtn: TSpeedButton;
     DeleteLinkBtn: TSpeedButton;
     MainMenu1: TMainMenu;
     N1: TMenuItem;
@@ -35,6 +35,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure BFSbtnClick(Sender: TObject);
     procedure DeleteLinkBtnClick(Sender: TObject);
+    procedure DeleteNodeBtnClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -152,7 +153,11 @@ begin
       end;
     stDeleteNode:
       begin
-
+        Centralize(G, Pos, StartNode);
+        if StartNode <> 0 then
+        begin
+          DeleteNode(G, StartNode);
+        end;
       end;
     stDeleteLink:
       begin
@@ -229,6 +234,15 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.DeleteNodeBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DeleteNodeBtn.Down then
+    State := stDeleteNode
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DeleteLinkBtnClick(Sender: TObject);
