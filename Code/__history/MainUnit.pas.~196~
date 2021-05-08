@@ -152,6 +152,7 @@ var
   d: Integer;
   Path: TStack;
   sPath: String;
+  AdjMatrix: TAdjMatrix;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -219,14 +220,15 @@ begin
           if (EndNode <> 0) then
           begin
 
+            ToAdjMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                Path := DFS(G, StartNode, EndNode); // Поиск в глубину
+                DFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в глубину
               stBFS:
-                Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+                BFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в ширину
               stDijkstra:
-                Path := Dijkstra(G, StartNode, EndNode); // Поиск в ширину
+                Dijkstra(AdjMatrix, StartNode, EndNode, Path);
             end;
 
             if not isEmpty(Path) then
@@ -272,7 +274,7 @@ var
   Node: TPNode;
   Neighbour: TPList;
   i: Integer;
-  deg: Integer;
+  j: Integer;
 begin
   DestroyGraph(G);
   InitializeGraph(G);
@@ -305,22 +307,32 @@ begin
       Read(fVertices, Node^);
     end;
 
-    // Чтение вершины списка смежности
-    New(Node.Head);
-    if not Eof(fArcs) then
-      Read(fArcs, Node.Head^);
-  else
-  begin
-    Dispose(Node.Head);
-    Node.Head := nil;
+    if Node.Deg <> 0 then
+    begin
+      for j := 1 to Node.Deg do
+      begin
+        if j = 1 then
+        begin
+          New(Neighbour);
+          Read(fArcs, Neighbour^);
+          Node.Head := Neighbour;
+        end
+        else
+        begin
+          New(Neighbour.Next);
+          Neighbour := Neighbour.Next;
+          Read(fArcs, Neighbour^);
+        end;
+
+      end;
+    end;
+
+    Inc(i);
   end;
 
-  Inc(i);
-end;
-
-G.Tail := Node;
-G.Order := i;
-RedrawGraph(G);
+  G.Tail := Node;
+  G.Order := i;
+  RedrawGraph(G);
 end;
 
 procedure TForm1.SaveGraph(Sender: TObject);

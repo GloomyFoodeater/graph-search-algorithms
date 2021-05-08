@@ -10,23 +10,23 @@ const
 type
 
   // Тип списка смежности
-  TAdjList = TList;
+  TAdjList = TPList;
 
   // Тип вершины графа
-  TVerticeList = ^TVerticeNode;
+  TVertice = ^TVerticeNode;
 
   TVerticeNode = record
     Center: TPoint;
     Number: Integer;
     Head: TAdjList;
-    Next: TVerticeList;
+    Next: TVertice;
     Deg: Integer;
   end;
 
   // Тип ориентированный граф
   TGraph = record
-    Head: TVerticeList;
-    Tail: TVerticeList;
+    Head: TVertice;
+    Tail: TVertice;
     Order: Integer;
   end;
 
@@ -34,11 +34,10 @@ type
   TWeights = array of array of Integer;
 
   { Процедура получения вершины по номеру }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TVerticeList);
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TVertice);
 
 { Процедура нахождения вершины и её координаты по точке на холсте }
-procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+procedure Centralize(const G: TGraph; var P: TPoint; out v: Integer);
 
 { Функция получения центра вершины }
 function GetCenter(const G: TGraph; v: Integer): TPoint;
@@ -65,7 +64,7 @@ procedure InitializeGraph(var G: TGraph);
 procedure DestroyGraph(var G: TGraph);
 
 { Процедура преобразования графа в матрицу весов }
-procedure ToWeightMatrix(const G: TGraph; var Matrix: TWeights);
+procedure ToAdjMatrix(const G: TGraph; var Matrix: TWeights);
 
 implementation
 
@@ -75,7 +74,7 @@ begin
 end;
 
 { Функция нахождения вершины по номеру в списке }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TVerticeList);
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TVertice);
 begin
   Vertice := G.Head;
 
@@ -87,10 +86,9 @@ begin
 
 end;
 
-procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+procedure Centralize(const G: TGraph; var P: TPoint; out v: Integer);
 var
-  Vertice, Found: TVerticeList;
+  Vertice, Found: TVertice;
   isFound: Boolean;
 begin
   Vertice := G.Head;
@@ -100,7 +98,7 @@ begin
   // Цикл А1. Поиск последней вершины с близкими координатами
   while Vertice <> nil do
   begin
-    isFound := Distance(Vertice.Center, P) <= R;
+    isFound := Distance(Vertice.Center, P) <= 20;
     if isFound then
       Found := Vertice;
     Vertice := Vertice.Next;
@@ -118,7 +116,7 @@ end;
 
 function GetCenter(const G: TGraph; v: Integer): TPoint;
 var
-  Vertice: TVerticeList;
+  Vertice: TVertice;
 begin
   GetByNumber(G, v, Vertice);
   if Vertice <> nil then
@@ -127,7 +125,7 @@ end;
 
 procedure AddNode(var G: TGraph; const C: TPoint);
 var
-  Vertice: TVerticeList;
+  Vertice: TVertice;
 begin
   Inc(G.Order);
 
@@ -155,7 +153,7 @@ end;
 
 procedure AddLink(var G: TGraph; v, u: Integer);
 var
-  Vertice: TVerticeList;
+  Vertice: TVertice;
   PrevArc, CurrArc: TAdjList;
   isFound: Boolean;
 begin
@@ -166,13 +164,13 @@ begin
 
   // Инициализация нового соседа
   New(CurrArc);
-  CurrArc.Number := u;
+  CurrArc.Elem := u;
 
   // Получение начального соседа
   PrevArc := Vertice.Head;
 
   // Список смежности был пуст или голова была больше нового соседа
-  if (PrevArc = nil) or (PrevArc.Number > u) then
+  if (PrevArc = nil) or (PrevArc.Elem > u) then
   begin
     CurrArc.Next := PrevArc;
     Vertice.Head := CurrArc;
@@ -181,11 +179,11 @@ begin
   begin
 
     // Цикл А1. Поиск места вставки (предыдущего соседа)
-    isFound := (PrevArc.Next = nil) or (PrevArc.Next.Number > u);
+    isFound := (PrevArc.Next = nil) or (PrevArc.Next.Elem > u);
     while not isFound do
     begin
       PrevArc := PrevArc.Next;
-      isFound := (PrevArc.Next = nil) or (PrevArc.Next.Number > u);
+      isFound := (PrevArc.Next = nil) or (PrevArc.Next.Elem > u);
     end; // Конец А1
 
     // Вставка нового соседа
@@ -198,8 +196,8 @@ end;
 
 procedure DeleteNode(var G: TGraph; v: Integer);
 var
-  PrevVertice, Vertice: TVerticeList;
-  PrevArc, Arc: TAdjList;
+  PrevVertice, Vertice: TVertice;
+  PrevArc, Arc: TPList;
 begin
   Dec(G.Order);
 
@@ -237,7 +235,7 @@ begin
       begin
 
         // Проверка номера соседа
-        if Arc.Number = v then
+        if Arc.Elem = v then
         begin
 
           // Переназначение предыдущего указателя
@@ -249,8 +247,8 @@ begin
           // Освобождение памяти звена списка
           Dispose(Arc);
         end // Конец if
-        else if Arc.Number > v then
-          Dec(Arc.Number);
+        else if Arc.Elem > v then
+          Dec(Arc.Elem);
 
         // Переход к следующему соседу
         PrevArc := Arc;
@@ -272,9 +270,9 @@ end;
 
 procedure DeleteLink(var G: TGraph; v, u: Integer);
 var
-  Vertice: TVerticeList;
-  PrevArc: TAdjList;
-  Arc: TAdjList;
+  Vertice: TVertice;
+  Arc: TPList;
+  DelNeighbour: TPList;
   isFound: Boolean;
 begin
 
@@ -284,37 +282,37 @@ begin
   Dec(Vertice.Deg);
 
   // Получение первого соседа
-  PrevArc := Vertice.Head;
+  Arc := Vertice.Head;
 
   // Поиск звена перед звеном с искомым соседом
-  if (PrevArc = nil) or (PrevArc.Number = u) then
+  if (Arc = nil) or (Arc.Elem = u) then
   begin
-    Arc := PrevArc;
-    if Arc <> nil then
-      Vertice.Head := Arc.Next
+    DelNeighbour := Arc;
+    if DelNeighbour <> nil then
+      Vertice.Head := DelNeighbour.Next
     else
       Vertice.Head := nil;
   end
   else
   begin
 
-    isFound := (PrevArc.Next.Number = u) or (PrevArc = nil);
+    isFound := (Arc.Next.Elem = u) or (Arc = nil);
 
     // Получение предыдущего соседа удаляемого
     while not isFound do
     begin
-      PrevArc := PrevArc.Next;
-      isFound := (PrevArc = nil) or (PrevArc.Next.Number = u);
+      Arc := Arc.Next;
+      isFound := (Arc = nil) or (Arc.Next.Elem = u);
     end;
 
-    Arc := PrevArc.Next;
-    PrevArc.Next := Arc.Next;
+    DelNeighbour := Arc.Next;
+    Arc.Next := DelNeighbour.Next;
   end;
 
   // Удаление соседа
-  if not(Arc = nil) then
+  if not(DelNeighbour = nil) then
   begin
-    Dispose(Arc);
+    Dispose(DelNeighbour);
   end;
 
 end;
@@ -328,7 +326,7 @@ end;
 
 procedure DestroyGraph(var G: TGraph);
 var
-  Vertice: TVerticeList;
+  Vertice: TVertice;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -344,11 +342,11 @@ begin
   end; // Конец А1
 end;
 
-procedure ToWeightMatrix(const G: TGraph; var Matrix: TWeights);
+procedure ToAdjMatrix;
 var
   i, j: Integer;
-  Vertice: TVerticeList;
-  Arc: TAdjList;
+  Vertice: TVertice;
+  Arc: TPList;
 begin
 
   // Инициализация матрицы
@@ -365,7 +363,7 @@ begin
     begin
 
       // Проверка смежности вершин
-      if (Arc <> nil) and (Arc.Number = j + 1) then
+      if (Arc <> nil) and (Arc.Elem = j + 1) then
       begin
 
         // Вершины были смежны
@@ -378,6 +376,7 @@ begin
         Matrix[i, j] := INFINITY;
       // Вершины не были смежными
     end; // Конец А2
+    // Matrix[i, i] := 0;
 
     // Переход к следующей вершине
     Vertice := Vertice.Next;

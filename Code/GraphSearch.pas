@@ -5,15 +5,15 @@ interface
 uses Digraph, DynStructures;
 
 { Процедура поиска в глубину }
-procedure DFS(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 
 { Процедура поиска в ширину }
-procedure BFS(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 
 { Процедура поиска алгоритмом Дейкстры }
-procedure Dijkstra(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 
 implementation
@@ -66,7 +66,7 @@ begin
     DestroyList(Path);
 end;
 
-procedure DFS(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 var
   v, u: Integer;
@@ -118,7 +118,7 @@ begin
   RestorePath(Parents, Src, Dest, Path);
 end;
 
-procedure BFS(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 var
   v, u: Integer;
@@ -171,7 +171,7 @@ begin
 
 end;
 
-procedure Dijkstra(const Graph: TAdjMatrix; const Src, Dest: Integer;
+procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
   out Path: TStack);
 var
   v, u: Integer;

@@ -54,7 +54,7 @@ var
   Form1: TForm1;
   State: TClickState;
   G: TGraph;
-  StartNode: Cardinal = 0;
+  StartNode: Integer = 0;
   StartNodeCenter: TPoint;
 
 implementation
@@ -121,8 +121,8 @@ end;
 
 procedure RedrawGraph(const G: TGraph);
 var
-  AdjMatrix: TAdjMatrix;
-  u, v: Cardinal;
+  AdjMatrix: TWeights;
+  u, v: Integer;
 begin
   Form1.Canvas.Pen.Color := clWhite;
   Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
@@ -148,11 +148,11 @@ end;
 procedure TForm1.FormClick(Sender: TObject);
 var
   Pos: TPoint;
-  EndNode: Cardinal;
+  EndNode: Integer;
   d: Integer;
   Path: TStack;
   sPath: String;
-  AdjMatrix: TAdjMatrix;
+  AdjMatrix: TWeights;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -186,7 +186,8 @@ begin
         Centralize(G, Pos, StartNode);
         if StartNode <> 0 then
         begin
-          DeleteNode(G, StartNode);
+          if (StartNode >= 1) and (StartNode < G.Order) then
+            DeleteNode(G, StartNode);
           RedrawGraph(G);
         end;
       end;
@@ -224,12 +225,11 @@ begin
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                Path := DFS(AdjMatrix, StartNode, EndNode); // Поиск в глубину
+                DFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в глубину
               stBFS:
-                Path := BFS(AdjMatrix, StartNode, EndNode); // Поиск в ширину
+                BFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в ширину
               stDijkstra:
-                Path := Dijkstra(AdjMatrix, StartNode, EndNode);
-              // Поиск в ширину
+                Dijkstra(AdjMatrix, StartNode, EndNode, Path);
             end;
 
             if not isEmpty(Path) then
@@ -270,9 +270,9 @@ end;
 
 procedure TForm1.OpenGraph(Sender: TObject);
 var
-  fVertices: File of TNode;
+  fVertices: File of TVerticeNode;
   fArcs: File of TItem;
-  Node: TPNode;
+  Node: TVertice;
   Neighbour: TPList;
   i: Integer;
   j: Integer;
@@ -338,9 +338,9 @@ end;
 
 procedure TForm1.SaveGraph(Sender: TObject);
 var
-  fVertices: File of TNode;
+  fVertices: File of TVerticeNode;
   fArcs: File of TItem;
-  Node: TPNode;
+  Node: TVertice;
   Neighbour: TPList;
 begin
   System.Assign(fVertices, 'Graph.ver');

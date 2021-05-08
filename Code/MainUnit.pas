@@ -54,8 +54,11 @@ var
   Form1: TForm1;
   State: TClickState;
   G: TGraph;
-  StartNode: Cardinal = 0;
+  StartNode: Integer = 0;
   StartNodeCenter: TPoint;
+
+const
+  R = 40;
 
 implementation
 
@@ -68,11 +71,11 @@ var
 begin
   d := Distance(c1, c2);
 
-  p[0].x := Round(c2.x + 20 * (c1.x - c2.x) / d);
-  p[0].y := Round(c2.y + 20 * (c1.y - c2.y) / d);
+  p[0].x := Round(c2.x + R * (c1.x - c2.x) / d);
+  p[0].y := Round(c2.y + R * (c1.y - c2.y) / d);
 
-  p[1].x := Round(c1.x + 20 * (c2.x - c1.x) / d);
-  p[1].y := Round(c1.y + 20 * (c2.y - c1.y) / d);
+  p[1].x := Round(c1.x + R * (c2.x - c1.x) / d);
+  p[1].y := Round(c1.y + R * (c2.y - c1.y) / d);
 
 end;
 
@@ -95,8 +98,7 @@ begin
   end;
 
   // Вывод круга
-  Form1.Canvas.Ellipse(Center.x - 20, Center.y - 20, Center.x + 20,
-    Center.y + 20);
+  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R, Center.y + R);
 
   // Вывод имени вершины
   Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
@@ -109,7 +111,7 @@ var
   Points: Array [1 .. 2] of TPoint;
 begin
   d := Distance(c1, c2);
-  if d > 20 then
+  if d > R then
   begin
     GetLinkPoints(c1, c2, Points);
     Form1.Canvas.Polyline(Points);
@@ -121,14 +123,14 @@ end;
 
 procedure RedrawGraph(const G: TGraph);
 var
-  AdjMatrix: TAdjMatrix;
-  u, v: Cardinal;
+  Weights: TWeights;
+  u, v: Integer;
 begin
   Form1.Canvas.Pen.Color := clWhite;
   Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
   Form1.Canvas.Pen.Color := clBlack;
-  ToAdjMatrix(G, AdjMatrix);
-  if Length(AdjMatrix) = 0 then
+  ToWeightMatrix(G, Weights);
+  if Length(Weights) = 0 then
     Exit;
 
   for u := 0 to G.Order - 1 do
@@ -136,7 +138,7 @@ begin
     DrawNode(u + 1, GetCenter(G, u + 1));
     for v := 0 to G.Order - 1 do
     begin
-      if AdjMatrix[u, v] <> INFINITY then
+      if Weights[u, v] <> INFINITY then
         DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
 
     end;
@@ -148,11 +150,11 @@ end;
 procedure TForm1.FormClick(Sender: TObject);
 var
   Pos: TPoint;
-  EndNode: Cardinal;
+  EndNode: Integer;
   d: Integer;
   Path: TStack;
   sPath: String;
-  AdjMatrix: TAdjMatrix;
+  AdjMatrix: TWeights;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -166,12 +168,12 @@ begin
       begin
         if StartNode = 0 then
         begin
-          Centralize(G, Pos, StartNode);
+          Centralize(G, Pos, R, StartNode);
           StartNodeCenter := Pos;
         end
         else
         begin
-          Centralize(G, Pos, EndNode);
+          Centralize(G, Pos, R, EndNode);
           if (EndNode <> 0) and (StartNode <> EndNode) then
           begin
             AddLink(G, StartNode, EndNode);
@@ -183,10 +185,11 @@ begin
       end;
     stDeleteNode:
       begin
-        Centralize(G, Pos, StartNode);
+        Centralize(G, Pos, R, StartNode);
         if StartNode <> 0 then
         begin
-          DeleteNode(G, StartNode);
+          if (StartNode >= 1) and (StartNode < G.Order) then
+            DeleteNode(G, StartNode);
           RedrawGraph(G);
         end;
       end;
@@ -194,11 +197,11 @@ begin
       begin
         if StartNode = 0 then
         begin
-          Centralize(G, Pos, StartNode);
+          Centralize(G, Pos, R, StartNode);
         end
         else
         begin
-          Centralize(G, Pos, EndNode);
+          Centralize(G, Pos, R, EndNode);
           if (EndNode <> 0) and (StartNode <> EndNode) then
           begin
             DeleteLink(G, StartNode, EndNode);
@@ -211,16 +214,16 @@ begin
       begin
         if StartNode = 0 then
         begin
-          Centralize(G, Pos, StartNode);
+          Centralize(G, Pos, R, StartNode);
           StartNodeCenter := Pos;
         end
         else
         begin
-          Centralize(G, Pos, EndNode);
+          Centralize(G, Pos, R, EndNode);
           if (EndNode <> 0) then
           begin
 
-            ToAdjMatrix(G, AdjMatrix);
+            ToWeightMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
@@ -269,10 +272,10 @@ end;
 
 procedure TForm1.OpenGraph(Sender: TObject);
 var
-  fVertices: File of TNode;
-  fArcs: File of TItem;
-  Node: TPNode;
-  Neighbour: TPList;
+  fVertices: File of TVerticeNode;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
   i: Integer;
   j: Integer;
 begin
@@ -337,10 +340,10 @@ end;
 
 procedure TForm1.SaveGraph(Sender: TObject);
 var
-  fVertices: File of TNode;
-  fArcs: File of TItem;
-  Node: TPNode;
-  Neighbour: TPList;
+  fVertices: File of TVerticeNode;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');

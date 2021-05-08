@@ -10,7 +10,7 @@ const
 type
 
   // Тип списка смежности
-  TAdjList = TList;
+  TAdjList = TPList;
 
   // Тип вершины графа
   TVerticeList = ^TVerticeNode;
