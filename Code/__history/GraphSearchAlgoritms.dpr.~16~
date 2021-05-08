@@ -2,14 +2,15 @@ program GraphSearchAlgoritms;
 
 uses
   Forms,
-  MainUnit in 'MainUnit.pas' {Form1};
+  MainUnit in 'MainUnit.pas' {Form1} ,
+  Digraph in 'Digraph.pas',
+  DynStructures in 'DynStructures.pas';
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);
-  NodeCounter := 0;
   State := stNone;
   with Form1.Canvas do
   begin
@@ -17,4 +18,5 @@ begin
     Font.Size := 10;
   end;
   Application.Run;
+
 end.

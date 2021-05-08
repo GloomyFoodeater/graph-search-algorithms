@@ -25,7 +25,7 @@ type
     N9: TMenuItem;
     DFSBtn: TSpeedButton;
     BFSbtn: TSpeedButton;
-    SpeedButton7: TSpeedButton;
+    DijkstraBtn: TSpeedButton;
     Button1: TButton;
     procedure FormClick(Sender: TObject);
     procedure AddNodeBtnClick(Sender: TObject);
@@ -36,6 +36,7 @@ type
     procedure BFSbtnClick(Sender: TObject);
     procedure DeleteLinkBtnClick(Sender: TObject);
     procedure DeleteNodeBtnClick(Sender: TObject);
+    procedure DijkstraBtnClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -115,6 +116,31 @@ begin
   end;
 end;
 
+procedure RedrawGraph(const G: TGraph);
+var
+  AdjMatrix: TAdjMatrix;
+  u, v: Cardinal;
+begin
+  Form1.Canvas.Pen.Color := clWhite;
+  Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
+  Form1.Canvas.Pen.Color := clBlack;
+  ToAdjMatrix(G, AdjMatrix);
+  if Length(AdjMatrix) = 0 then
+    Exit;
+
+  for u := 0 to G.Order - 1 do
+  begin
+    DrawNode(u + 1, GetCenter(G, u + 1));
+    for v := 0 to G.Order - 1 do
+    begin
+      if AdjMatrix[u, v] <> INFINITY then
+        DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
+
+    end;
+  end;
+
+end;
+
 // Событие нажатия на холст
 procedure TForm1.FormClick(Sender: TObject);
 var
@@ -157,6 +183,7 @@ begin
         if StartNode <> 0 then
         begin
           DeleteNode(G, StartNode);
+          RedrawGraph(G);
         end;
       end;
     stDeleteLink:
@@ -165,18 +192,18 @@ begin
         begin
           Centralize(G, Pos, StartNode);
         end
-        else  s
+        else
         begin
           Centralize(G, Pos, EndNode);
           if (EndNode <> 0) and (StartNode <> EndNode) then
           begin
             DeleteLink(G, StartNode, EndNode);
+            RedrawGraph(G);
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
       end;
-    stDFS, stBFS:
+    stDFS, stBFS, stDijkstra:
       begin
         if StartNode = 0 then
         begin
@@ -190,10 +217,14 @@ begin
           begin
 
             // Получение пути с помощью алгоритма
-            if State = stDFS then
-              Path := DFS(G, StartNode, EndNode) // Поиск в глубину
-            else
-              Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+            case State of
+              stDFS:
+                Path := DFS(G, StartNode, EndNode); // Поиск в глубину
+              stBFS:
+                Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+              stDijkstra:
+                Path := Dijkstra(G, StartNode, EndNode); // Поиск в ширину
+            end;
 
             if not isEmpty(Path) then
             begin
@@ -220,13 +251,8 @@ begin
 
             // Обнуление начальной и конечной вершины
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
-      end;
-    stDijkstra:
-      begin
-
       end;
   end;
 end;
@@ -234,6 +260,15 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.DijkstraBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DijkstraBtn.Down then
+    State := stDijkstra
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DeleteNodeBtnClick(Sender: TObject);

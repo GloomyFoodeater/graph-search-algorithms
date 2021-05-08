@@ -84,7 +84,7 @@ object Form1: TForm1
       Caption = #1055#1086#1080#1089#1082' '#1074' '#1096#1080#1088#1080#1085#1091
       OnClick = BFSbtnClick
     end
-    object SpeedButton7: TSpeedButton
+    object DijkstraBtn: TSpeedButton
       Left = 24
       Top = 456
       Width = 128
@@ -92,6 +92,7 @@ object Form1: TForm1
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1044#1077#1081#1082#1089#1090#1088#1099
+      OnClick = DijkstraBtnClick
     end
     object Button1: TButton
       Left = 24

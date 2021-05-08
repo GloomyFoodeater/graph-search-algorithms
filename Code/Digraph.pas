@@ -4,6 +4,9 @@ interface
 
 uses System.Types, DynStructures, System.SysUtils;
 
+const
+  INFINITY = MaxInt;
+
 type
 
   // Тип списка смежности
@@ -26,9 +29,11 @@ type
     Order: Cardinal;
   end;
 
-  TAdjMatrix = array of array of Boolean;
+  TAdjMatrix = array of array of Integer;
 
-  { Функция нахождения вершины и её координаты по точке на холсте }
+function GetByNumber(const G: TGraph; u: Integer): TPNode;
+
+{ Функция нахождения вершины и её координаты по точке на холсте }
 procedure Centralize(const G: TGraph; var P: TPoint; out u: Cardinal);
 
 { Функция получения центра вершины }
@@ -55,15 +60,6 @@ procedure InitializeGraph(var G: TGraph);
 { Процедура очищения графа }
 procedure DestroyGraph(var G: TGraph);
 
-{ Функция поиска в глубину }
-function DFS(const G: TGraph; u, v: Cardinal): TStack;
-
-{ Функция поиска в ширину }
-function BFS(const G: TGraph; u, v: Cardinal): TStack;
-
-{ Функция поиска алгоритмом Дейкстры }
-function Dijkstra(const G: TGraph; u, v: Cardinal): TStack;
-
 { Процедура преобразования графа в матрицу смежности }
 procedure ToAdjMatrix(const G: TGraph; var Matrix: TAdjMatrix);
 
@@ -80,7 +76,7 @@ begin
   Result := G.Head;
 
   // Цикл А1. Поиск вершины с данным номером
-  while Result.Number <> u do
+  while (Result <> nil) and (Result.Number <> u) do
   begin
     Result := Result.Next;
   end; // Конец А1
@@ -121,7 +117,8 @@ var
   Node: TPNode;
 begin
   Node := GetByNumber(G, u);
-  Result := Node.Center;
+  if Node <> nil then
+    Result := Node.Center;
 end;
 
 procedure AddNode;
@@ -290,7 +287,10 @@ begin
   if (Neighbour = nil) or (Neighbour.Elem = v) then
   begin
     DelNeighbour := Neighbour;
-    Node.Head := DelNeighbour.Next
+    if DelNeighbour <> nil then
+      Node.Head := DelNeighbour.Next
+    else
+      Node.Head := nil;
   end
   else
   begin
@@ -341,193 +341,6 @@ begin
   end; // Конец А1
 end;
 
-function RestorePath(const Parents: array of Cardinal; u, v: Integer): TStack;
-begin
-
-  InitializeStack(Result); // Инициализация стека
-
-  // Цикл А1. Добавление очередного предка в пути
-  while u <> v do
-  begin
-    Push(Result, v);
-    v := Parents[v - 1];
-  end; // Конец А1
-  Push(Result, u);
-
-end;
-
-function DFS;
-var
-  Node: TPNode;
-  Neighbour: TAdjList;
-  Stack: TStack;
-  isFound: Boolean;
-  Parents: Array of Cardinal;
-  isVisited: Array of Boolean;
-  i: Integer;
-  w, StartCopy: Cardinal;
-begin
-
-  // Инициализация стека
-  InitializeStack(Stack);
-  Push(Stack, u);
-
-  // Инициализация массива меток
-  SetLength(isVisited, G.Order);
-  for i := Low(isVisited) to High(isVisited) do
-    isVisited[i] := False;
-
-  // Инциализация массива предков
-  SetLength(Parents, G.Order);
-
-  // Цикл А1. Извлечение элементов из стека до нахождения вершины
-  StartCopy := u; // Сохранение начала пути
-  isFound := u = v;
-  while not(isEmpty(Stack) or isFound) do
-  begin
-    // Получение вершины
-    u := Pop(Stack);
-    if not isVisited[u - 1] then
-    begin
-
-      // Посещение вершины
-      isVisited[u - 1] := true;
-      isFound := u = v;
-
-      // Цикл А2. Сохранение соседей в стек
-      Node := GetByNumber(G, u);
-      Neighbour := Node.Head;
-      while not((Neighbour = nil) or isFound) do
-      begin
-        w := Neighbour.Elem;
-        // Получение очередного соседа
-
-        // Добавление в стек непосещённых вершин
-        if not isVisited[w - 1] then
-        begin
-          Push(Stack, w); // Вставка вершины в стек
-          Parents[w - 1] := u; // Сохранение пути
-        end; // Конец if
-
-        Neighbour := Neighbour.Next; // Переход к следующему соседу
-      end; // Конец А2
-
-    end; // Конец if
-
-  end; // Конец А1
-
-  DestroyList(Stack); // Очистка стека
-
-  // Восстановление пути
-  InitializeStack(Result);
-  if isFound then
-    Result := RestorePath(Parents, StartCopy, v);
-end;
-
-function BFS;
-var
-  Node: TPNode;
-  Neighbour: TAdjList;
-  Queue: TQueue;
-  i: Cardinal;
-  isVisited: Array of Boolean;
-  Parents: Array of Cardinal;
-  StartCopy: Cardinal;
-  w: Cardinal;
-  isFound: Boolean;
-begin
-
-  // Инициализация очереди
-  InitializeQueue(Queue);
-  Enqueue(Queue, u);
-
-  // Инициализация массива меток
-  SetLength(isVisited, G.Order);
-  for i := Low(isVisited) to High(isVisited) do
-    isVisited[i] := False;
-
-  // Инициализация массива предков
-  SetLength(Parents, G.Order);
-
-  // Цикл А1. Извлечение из очереди вершин
-  StartCopy := u;
-  isFound := u = v;
-  while not(isEmpty(Queue.Head) or isFound) do
-  begin
-    u := Dequeue(Queue);
-    if not isVisited[u - 1] then
-    begin
-
-      // Посещение вершины
-      isVisited[u - 1] := true;
-      isFound := u = v;
-
-      // Цикл А2. Вставка в очередь соседей вершины
-      Node := GetByNumber(G, u);
-      Neighbour := Node.Head;
-      while not((Neighbour = nil) or isFound) do
-      begin
-        w := Neighbour.Elem;
-        if not isVisited[w - 1] then
-        begin
-          Enqueue(Queue, w); // Запись в очередь
-          Parents[w - 1] := u; // Сохранение пути
-        end; // Конец if
-        Neighbour := Neighbour.Next;
-      end; // Конец А2
-
-    end; // Конец if
-
-  end; // Конец А1
-
-  // Очистка очереди
-  DestroyList(Queue.Head);
-
-  // Восстановление пути
-  InitializeStack(Result);
-  if isFound then
-    Result := RestorePath(Parents, StartCopy, v);
-
-end;
-
-function Dijkstra;
-const
-  INFINITY: Cardinal = MaxInt; // TODO: Max cardinal
-var
-  Node: TPNode;
-  Neighbour: TAdjList;
-  isVisited: Array of Boolean;
-  Marks: Array of Cardinal;
-  i: Cardinal;
-  w: Cardinal;
-  Parents: Array of Cardinal;
-  StartCopy: Cardinal;
-  isFound: Boolean;
-begin
-
-  // Инициализация меток
-  for i := Low(Marks) to High(Marks) do
-    Marks[i] := INFINITY;
-  Marks[u] := 0;
-
-  // Инициализация массива меток
-  SetLength(isVisited, G.Order);
-  for i := Low(isVisited) to High(isVisited) do
-    isVisited[i] := False;
-
-  // Инициализация массива предков
-  SetLength(Parents, G.Order);
-
-  StartCopy := u;
-  isFound := u = v;
-
-  // Восстановление пути
-  InitializeStack(Result);
-  if isFound then
-    Result := RestorePath(Parents, StartCopy, v);
-
-end;
-
 procedure ToAdjMatrix;
 var
   i: Integer;
@@ -554,14 +367,16 @@ begin
       begin
 
         // Вершины были смежны
-        Matrix[i, j] := true;
+        Matrix[i, j] := 1;
 
         // Переход к следующему соседу
         Neighbour := Neighbour.Next;
       end
       else
-        Matrix[i, j] := False; // Вершины не были смежными
+        Matrix[i, j] := INFINITY;
+      // Вершины не были смежными
     end; // Конец А2
+    Matrix[i, i] := 0;
 
     // Переход к следующей вершине
     Node := Node.Next;

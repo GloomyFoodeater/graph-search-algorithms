@@ -4,10 +4,13 @@ interface
 
 uses System.Types, DynStructures, System.SysUtils;
 
+const
+  INFINITY = MaxInt;
+
 type
 
   // Тип списка смежности
-  TPAdjList = TPList;
+  TAdjList = TPList;
 
   // Тип вершины графа
   TPNode = ^TNode;
@@ -15,7 +18,7 @@ type
   TNode = record
     Center: TPoint;
     Number: Cardinal;
-    Head: TPAdjList;
+    Head: TAdjList;
     Next: TPNode;
   end;
 
@@ -26,7 +29,7 @@ type
     Order: Cardinal;
   end;
 
-  TAdjMatrix = array of array of Boolean;
+  TAdjMatrix = array of array of Integer;
 
   { Функция нахождения вершины и её координаты по точке на холсте }
 procedure Centralize(const G: TGraph; var P: TPoint; out u: Cardinal);
@@ -64,9 +67,28 @@ function BFS(const G: TGraph; u, v: Cardinal): TStack;
 { Функция поиска алгоритмом Дейкстры }
 function Dijkstra(const G: TGraph; u, v: Cardinal): TStack;
 
+{ Процедура преобразования графа в матрицу смежности }
 procedure ToAdjMatrix(const G: TGraph; var Matrix: TAdjMatrix);
 
 implementation
+
+procedure MinDist(const Distances: array of Integer;
+  const isVisited: Array of Boolean; out u, d: Cardinal);
+var
+  i: Integer;
+begin
+
+  d := INFINITY;
+
+  for i := Low(Distances) to High(Distances) do
+  begin
+    if not isVisited[i] and (Distances[i] < d) then
+    begin
+      d := Distances[i];
+      u := i + 1;
+    end;
+  end;
+end;
 
 function Distance(const p1, p2: TPoint): Integer;
 begin
@@ -79,7 +101,7 @@ begin
   Result := G.Head;
 
   // Цикл А1. Поиск вершины с данным номером
-  while Result.Number <> u do
+  while (Result <> nil) and (Result.Number <> u) do
   begin
     Result := Result.Next;
   end; // Конец А1
@@ -120,7 +142,8 @@ var
   Node: TPNode;
 begin
   Node := GetByNumber(G, u);
-  Result := Node.Center;
+  if Node <> nil then
+    Result := Node.Center;
 end;
 
 procedure AddNode;
@@ -198,51 +221,76 @@ var
   PrNeighbour, Neighbour: TPList;
 
 begin
+
+  // Проверка корректности полученных данных
   if (u < 1) or (u > G.Order) then
     Exit;
   Dec(G.Order);
 
+  // Цикл А1. Проход по вершинам
   PrNode := nil;
   Node := G.Head;
   while Node <> nil do
   begin
+
+    // Проверка номера вершины
     if Node.Number = u then
     begin
+
+      // Переназначение предыдущего указателя
       if PrNode = nil then
         G.Head := Node.Next
       else
         PrNode.Next := Node.Next;
+
+      // Освобождение списка смежности
       DestroyList(Node.Head);
       Dispose(Node);
-    end
+    end // Конец if
     else
     begin
+
+      // Уменьшение всех вершин, больших удаляемой на 1
       if Node.Number > u then
         Dec(Node.Number);
 
+      // Цикл А2. Проход по соседям вершины
       PrNeighbour := nil;
       Neighbour := Node.Head;
       while Neighbour <> nil do
       begin
+
+        // Проверка номера соседа
         if Neighbour.Elem = u then
         begin
+
+          // Переназначение предыдущего указателя
           if PrNeighbour = nil then
             Node.Head := Neighbour.Next
           else
             PrNeighbour.Next := Neighbour.Next;
+
+          // Освобождение памяти звена списка
           Dispose(Neighbour);
-        end
+        end // Конец if
         else if Neighbour.Elem > u then
           Dec(Neighbour.Elem);
+
+        // Переход к следующему соседу
         PrNeighbour := Neighbour;
         Neighbour := Neighbour.Next;
 
-      end;
+      end; // Конец А2
 
-    end;
-    if Node.Next <> nil then PrNode := Node;
+    end; // Конец else
+
+    // Переход к следующей вершине
+    if Node.Next <> nil then
+      PrNode := Node;
     Node := Node.Next;
-  end;
+  end; // Конец А1
+
+  // Переназначение хвоста списка
   G.Tail := PrNode;
 end;
 
@@ -264,7 +312,10 @@ begin
   if (Neighbour = nil) or (Neighbour.Elem = v) then
   begin
     DelNeighbour := Neighbour;
-    Node.Head := DelNeighbour.Next
+    if DelNeighbour <> nil then
+      Node.Head := DelNeighbour.Next
+    else
+      Node.Head := nil;
   end
   else
   begin
@@ -333,7 +384,7 @@ end;
 function DFS;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  Neighbour: TAdjList;
   Stack: TStack;
   isFound: Boolean;
   Parents: Array of Cardinal;
@@ -401,7 +452,7 @@ end;
 function BFS;
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  Neighbour: TAdjList;
   Queue: TQueue;
   i: Cardinal;
   isVisited: Array of Boolean;
@@ -465,24 +516,26 @@ begin
 end;
 
 function Dijkstra;
-const
-  INFINITY: Cardinal = MaxInt; // TODO: Max cardinal
 var
   Node: TPNode;
-  Neighbour: TPAdjList;
+  Neighbour: TAdjList;
   isVisited: Array of Boolean;
-  Marks: Array of Cardinal;
+  Marks: Array of Integer;
   i: Cardinal;
   w: Cardinal;
   Parents: Array of Cardinal;
   StartCopy: Cardinal;
   isFound: Boolean;
+  d: Cardinal;
+  AdjMatrix: TAdjMatrix;
 begin
 
+  ToAdjMatrix(G, AdjMatrix);
+
   // Инициализация меток
+  SetLength(Marks, G.Order);
   for i := Low(Marks) to High(Marks) do
-    Marks[i] := INFINITY;
-  Marks[u] := 0;
+    Marks[i] := AdjMatrix[u - 1, i];
 
   // Инициализация массива меток
   SetLength(isVisited, G.Order);
@@ -493,7 +546,26 @@ begin
   SetLength(Parents, G.Order);
 
   StartCopy := u;
-  isFound := u = v;
+  isFound := False;
+  d := 0;
+
+  while not(isFound or (d = INFINITY)) do
+  begin
+    MinDist(Marks, isVisited, u, d);
+    isFound := u = v;
+    isVisited[u - 1] := true;
+
+    // TODO 3: Проход по циклу в случае, когда вершина найдена
+    for w := 0 to G.Order - 1 do
+    begin
+      if not isVisited[w] and (Marks[w] > d + AdjMatrix[u - 1, w]) then
+      begin
+        Marks[w] := d + AdjMatrix[u - 1, w];
+        Parents[w] := u;
+      end;
+
+    end;
+  end;
 
   // Восстановление пути
   InitializeStack(Result);
@@ -509,23 +581,39 @@ var
   Neighbour: TPList;
   j: Integer;
 begin
+
+  // Инициализация матрицы
   SetLength(Matrix, G.Order, G.Order);
+
+  // Цикл А1. Проход по вершинам
   Node := G.Head;
   for i := 0 to G.Order - 1 do
   begin
+
+    // Цикл А2. Проход по соседям
     Neighbour := Node.Head;
     for j := 0 to G.Order - 1 do
     begin
+
+      // Проверка смежности вершин
       if (Neighbour <> nil) and (Neighbour.Elem = j + 1) then
       begin
-        Matrix[i, j] := true;
+
+        // Вершины были смежны
+        Matrix[i, j] := 1;
+
+        // Переход к следующему соседу
         Neighbour := Neighbour.Next;
       end
       else
-        Matrix[i, j] := False;
-    end;
+        Matrix[i, j] := INFINITY;
+      // Вершины не были смежными
+    end; // Конец А2
+    Matrix[i, i] := 0;
+
+    // Переход к следующей вершине
     Node := Node.Next;
-  end;
+  end; // Конец А1
 end;
 
 end.

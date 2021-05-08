@@ -2,9 +2,10 @@ program GraphSearchAlgoritms;
 
 uses
   Forms,
-  MainUnit in 'MainUnit.pas' {Form1} ,
+  MainUnit in 'MainUnit.pas' {Form1},
   Digraph in 'Digraph.pas',
-  DynStructures in 'DynStructures.pas';
+  DynStructures in 'DynStructures.pas',
+  GraphSearch in 'GraphSearch.pas';
 
 {$R *.res}
 

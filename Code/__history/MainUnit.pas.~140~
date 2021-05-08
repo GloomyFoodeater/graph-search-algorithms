@@ -115,6 +115,27 @@ begin
   end;
 end;
 
+procedure RedrawGraph(const G: TGraph);
+var
+  AdjMatrix: TAdjMatrix;
+  u, v: Cardinal;
+begin
+  Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
+  ToAdjMatrix(G, AdjMatrix);
+
+  for u := 0 to G.Order - 1 do
+  begin
+    DrawNode(u, GetCenter(G, u));
+    for v := 0 to G.Order - 1 do
+    begin
+      if AdjMatrix[u + 1, v + 1] then
+        DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
+
+    end;
+  end;
+
+end;
+
 // Событие нажатия на холст
 procedure TForm1.FormClick(Sender: TObject);
 var
@@ -153,7 +174,12 @@ begin
       end;
     stDeleteNode:
       begin
-
+        Centralize(G, Pos, StartNode);
+        if StartNode <> 0 then
+        begin
+          DeleteNode(G, StartNode);
+          RedrawGraph(G);
+        end;
       end;
     stDeleteLink:
       begin
@@ -167,8 +193,8 @@ begin
           if (EndNode <> 0) and (StartNode <> EndNode) then
           begin
             DeleteLink(G, StartNode, EndNode);
+            RedrawGraph(G);
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
       end;
@@ -216,7 +242,6 @@ begin
 
             // Обнуление начальной и конечной вершины
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
       end;

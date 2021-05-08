@@ -11,7 +11,7 @@ type
     Panel1: TPanel;
     AddNodeBtn: TSpeedButton;
     AddLinkBtn: TSpeedButton;
-    SpeedButton3: TSpeedButton;
+    DeleteNodeBtn: TSpeedButton;
     DeleteLinkBtn: TSpeedButton;
     MainMenu1: TMainMenu;
     N1: TMenuItem;
@@ -25,7 +25,7 @@ type
     N9: TMenuItem;
     DFSBtn: TSpeedButton;
     BFSbtn: TSpeedButton;
-    SpeedButton7: TSpeedButton;
+    DijkstraBtn: TSpeedButton;
     Button1: TButton;
     procedure FormClick(Sender: TObject);
     procedure AddNodeBtnClick(Sender: TObject);
@@ -35,6 +35,8 @@ type
     procedure Button1Click(Sender: TObject);
     procedure BFSbtnClick(Sender: TObject);
     procedure DeleteLinkBtnClick(Sender: TObject);
+    procedure DeleteNodeBtnClick(Sender: TObject);
+    procedure DijkstraBtnClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -114,6 +116,31 @@ begin
   end;
 end;
 
+procedure RedrawGraph(const G: TGraph);
+var
+  AdjMatrix: TAdjMatrix;
+  u, v: Cardinal;
+begin
+  Form1.Canvas.Pen.Color := clWhite;
+  Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
+  Form1.Canvas.Pen.Color := clBlack;
+  ToAdjMatrix(G, AdjMatrix);
+  if Length(AdjMatrix) = 0 then Exit;
+  
+
+  for u := 0 to G.Order - 1 do
+  begin
+    DrawNode(u + 1, GetCenter(G, u + 1));
+    for v := 0 to G.Order - 1 do
+    begin
+      if AdjMatrix[u, v] <> INFINITY then
+        DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
+
+    end;
+  end;
+
+end;
+
 // Событие нажатия на холст
 procedure TForm1.FormClick(Sender: TObject);
 var
@@ -152,7 +179,12 @@ begin
       end;
     stDeleteNode:
       begin
-
+        Centralize(G, Pos, StartNode);
+        if StartNode <> 0 then
+        begin
+          DeleteNode(G, StartNode);
+          RedrawGraph(G);
+        end;
       end;
     stDeleteLink:
       begin
@@ -165,12 +197,9 @@ begin
           Centralize(G, Pos, EndNode);
           if (EndNode <> 0) and (StartNode <> EndNode) then
           begin
-            Canvas.Pen.Color := clWhite;
-            DrawLink(G, StartNodeCenter, Pos);
-            Canvas.Pen.Color := clWhite;
             DeleteLink(G, StartNode, EndNode);
+            RedrawGraph(G);
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
       end;
@@ -218,7 +247,6 @@ begin
 
             // Обнуление начальной и конечной вершины
             StartNode := 0;
-            EndNode := 0;
           end;
         end;
       end;
@@ -232,6 +260,24 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.DijkstraBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DijkstraBtn.Down then
+    State := stDijkstra
+  else
+    State := stNone;
+end;
+
+procedure TForm1.DeleteNodeBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DeleteNodeBtn.Down then
+    State := stDeleteNode
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DeleteLinkBtnClick(Sender: TObject);
