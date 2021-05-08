@@ -5,7 +5,7 @@ interface
 uses System.Types, DynStructures, System.SysUtils;
 
 const
-  INFINITY = MaxInt;
+  INFINITY = 1000000;
 
 type
 
@@ -381,7 +381,7 @@ begin
         Matrix[i, j] := INFINITY;
       // Вершины не были смежными
     end; // Конец А2
-    Matrix[i, i] := 0;
+    // Matrix[i, i] := 0;
 
     // Переход к следующей вершине
     Node := Node.Next;

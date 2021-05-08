@@ -30,19 +30,15 @@ begin
   // Цикл А1. Поиск минимального элемента
   for i := Low(Distances) to High(Distances) do
   begin
-
-    // Проверка посещённости и сравнение
     if not isVisited[i] and (Distances[i] < d) then
     begin
       d := Distances[i];
       v := i + 1;
-    end; // Конец if
-
+    end;
   end; // Конец А1
 
 end;
 
-{ Процедура восстановления пути по массиву предков }
 procedure RestorePath(const Parents: array of Integer; const Src, Dest: Integer;
   out Path: TStack);
 var
@@ -50,7 +46,7 @@ var
 begin
 
   InitializeStack(Path); // Инициализация стека
-  v := Dest; // Сохранение конца пути
+  v := Dest;
 
   // Цикл А1. Добавление очередного предка в пути
   while (v <> Src) and (v <> 0) do

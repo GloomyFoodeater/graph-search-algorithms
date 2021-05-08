@@ -42,7 +42,6 @@ begin
 
 end;
 
-{ Процедура восстановления пути по массиву предков }
 procedure RestorePath(const Parents: array of Integer; const Src, Dest: Integer;
   out Path: TStack);
 var
@@ -50,7 +49,7 @@ var
 begin
 
   InitializeStack(Path); // Инициализация стека
-  v := Dest; // Сохранение конца пути
+  v := Dest;
 
   // Цикл А1. Добавление очередного предка в пути
   while (v <> Src) and (v <> 0) do

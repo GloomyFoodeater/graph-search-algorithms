@@ -152,6 +152,7 @@ var
   d: Integer;
   Path: TStack;
   sPath: String;
+  AdjMatrix: TAdjMatrix;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -219,14 +220,15 @@ begin
           if (EndNode <> 0) then
           begin
 
+            ToAdjMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                Path := DFS(G, StartNode, EndNode); // Поиск в глубину
+                DFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в глубину
               stBFS:
-                Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+                BFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в ширину
               stDijkstra:
-                Path := Dijkstra(G, StartNode, EndNode); // Поиск в ширину
+                Dijkstra(AdjMatrix, StartNode, EndNode, Path);
             end;
 
             if not isEmpty(Path) then

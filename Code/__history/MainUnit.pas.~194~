@@ -219,14 +219,16 @@ begin
           if (EndNode <> 0) then
           begin
 
+            ToAdjMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                Path := DFS(G, StartNode, EndNode); // Поиск в глубину
+                Path := DFS(AdjMatrix, StartNode, EndNode); // Поиск в глубину
               stBFS:
-                Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+                Path := BFS(AdjMatrix, StartNode, EndNode); // Поиск в ширину
               stDijkstra:
-                Path := Dijkstra(G, StartNode, EndNode); // Поиск в ширину
+                Path := Dijkstra(AdjMatrix, StartNode, EndNode);
+                // Поиск в ширину
             end;
 
             if not isEmpty(Path) then
@@ -272,7 +274,7 @@ var
   Node: TPNode;
   Neighbour: TPList;
   i: Integer;
-  deg: Integer;
+  j: Integer;
 begin
   DestroyGraph(G);
   InitializeGraph(G);
@@ -286,19 +288,44 @@ begin
   i := 0;
   while not Eof(fVertices) do
   begin
+
+    // Чтение вершины из файла вершин
     if i = 0 then
     begin
+
+      // Чтение головы списка вершин
       New(Node);
       Read(fVertices, Node^);
       G.Head := Node;
     end
     else
     begin
+
+      // Чтение не головной вершины
       New(Node.Next);
       Node := Node.Next;
       Read(fVertices, Node^);
     end;
-    Node.Head := nil;
+
+    if Node.Deg <> 0 then
+    begin
+      for j := 1 to Node.Deg do
+      begin
+        if j = 1 then
+        begin
+          New(Neighbour);
+          Read(fArcs, Neighbour^);
+          Node.Head := Neighbour;
+        end
+        else
+        begin
+          New(Neighbour.Next);
+          Neighbour := Neighbour.Next;
+          Read(fArcs, Neighbour^);
+        end;
+
+      end;
+    end;
 
     Inc(i);
   end;

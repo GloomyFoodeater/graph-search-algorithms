@@ -18,31 +18,24 @@ procedure Dijkstra(const Graph: TAdjMatrix; const Src, Dest: Integer;
 
 implementation
 
-{ Процедура поиска не посещённой вершины с наименьшей меткой }
 procedure MinDist(const Distances: array of Integer;
-  const isVisited: Array of Boolean; out v, d: Integer);
+  const isVisited: Array of Boolean; out u, d: Integer);
 var
   i: Integer;
 begin
 
   d := INFINITY;
 
-  // Цикл А1. Поиск минимального элемента
   for i := Low(Distances) to High(Distances) do
   begin
-
-    // Проверка посещённости и сравнение
     if not isVisited[i] and (Distances[i] < d) then
     begin
       d := Distances[i];
-      v := i + 1;
-    end; // Конец if
-
-  end; // Конец А1
-
+      u := i + 1;
+    end;
+  end;
 end;
 
-{ Процедура восстановления пути по массиву предков }
 procedure RestorePath(const Parents: array of Integer; const Src, Dest: Integer;
   out Path: TStack);
 var
@@ -50,7 +43,7 @@ var
 begin
 
   InitializeStack(Path); // Инициализация стека
-  v := Dest; // Сохранение конца пути
+  v := Dest;
 
   // Цикл А1. Добавление очередного предка в пути
   while (v <> Src) and (v <> 0) do
@@ -72,7 +65,7 @@ var
   v, u: Integer;
   Order: Integer;
   s: TStack;
-  isUsed: Array of Boolean;
+  isVisited: Array of Boolean;
   Parents: Array of Integer;
 begin
 
@@ -84,10 +77,10 @@ begin
   Push(s, v);
 
   // Подготовка меток
-  SetLength(isUsed, Order);
+  SetLength(isVisited, Order);
   for u := 1 to Order do
-    isUsed[u - 1] := False;
-  isUsed[v - 1] := true;
+    isVisited[u - 1] := False;
+  isVisited[v - 1] := true;
 
   // Подготовка массива предков
   SetLength(Parents, Order);
@@ -103,9 +96,9 @@ begin
     // Цикл А2. Добавление в стек всех соседей вершины
     for u := 1 to Order do
     begin
-      if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
+      if not isVisited[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
       begin
-        isUsed[u - 1] := true;
+        isVisited[u - 1] := true;
         Parents[u - 1] := v;
         Push(s, u);
       end; // Конец if
@@ -124,7 +117,7 @@ var
   v, u: Integer;
   Order: Integer;
   q: TQueue;
-  isUsed: Array of Boolean;
+  isVisited: Array of Boolean;
   Parents: Array of Integer;
 begin
 
@@ -136,10 +129,10 @@ begin
   Enqueue(q, v);
 
   // Подготовка меток
-  SetLength(isUsed, Order);
+  SetLength(isVisited, Order);
   for u := 1 to Order do
-    isUsed[u - 1] := False;
-  isUsed[v - 1] := true;
+    isVisited[u - 1] := False;
+  isVisited[v - 1] := true;
 
   // Подготовка массива предков
   SetLength(Parents, Order);
@@ -155,9 +148,9 @@ begin
     // Цикл А2. Добавление в стек всех соседей вершины
     for u := 1 to Order do
     begin
-      if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
+      if not isVisited[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
       begin
-        isUsed[u - 1] := true;
+        isVisited[u - 1] := true;
         Parents[u - 1] := v;
         Enqueue(q, u);
       end; // Конец if
@@ -196,6 +189,7 @@ begin
   SetLength(isVisited, Order);
   for u := 1 to Order do
     isVisited[u - 1] := False;
+  isVisited[v - 1] := true;
 
   // Подготовка массива предков
   SetLength(Parents, Order);
@@ -213,15 +207,14 @@ begin
     begin
       if not isVisited[u - 1] and (Marks[u - 1] > d + Graph[v - 1, u - 1]) then
       begin
+        isVisited[u - 1] := true;
         Parents[u - 1] := v;
         Marks[u - 1] := d + Graph[v - 1, u - 1];
       end;
     end;
 
-    // Получение следующей вершины
-    isVisited[v - 1] := true;
-    isFound := v = Dest;
     MinDist(Marks, isVisited, v, d);
+    isFound := v = Dest;
 
   end; // Конец А1
 
