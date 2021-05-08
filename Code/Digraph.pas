@@ -20,6 +20,7 @@ type
     Number: Cardinal;
     Head: TAdjList;
     Next: TPNode;
+    Deg: Integer;
   end;
 
   // Тип простой граф
@@ -135,6 +136,7 @@ begin
     Number := G.Order;
     Head := nil;
     Next := nil;
+    Deg := 0;
   end;
 
   // Инициализация указателя на новую вершину
@@ -157,6 +159,7 @@ begin
 
   // Получение вершины
   Node := GetByNumber(G, u);
+  Inc(Node.Deg);
 
   // Инициализация нового соседа
   New(Curr);
@@ -279,6 +282,8 @@ begin
 
   // Получение начала дуги
   Node := GetByNumber(G, u);
+
+  Dec(Node.Deg);
 
   // Получение первого соседа
   Neighbour := Node.Head;

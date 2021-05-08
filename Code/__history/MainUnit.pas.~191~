@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, Digraph, DynStructures;
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
+  DynStructures;
 
 type
   TForm1 = class(TForm)
@@ -25,7 +26,7 @@ type
     N9: TMenuItem;
     DFSBtn: TSpeedButton;
     BFSbtn: TSpeedButton;
-    SpeedButton7: TSpeedButton;
+    DijkstraBtn: TSpeedButton;
     Button1: TButton;
     procedure FormClick(Sender: TObject);
     procedure AddNodeBtnClick(Sender: TObject);
@@ -36,6 +37,9 @@ type
     procedure BFSbtnClick(Sender: TObject);
     procedure DeleteLinkBtnClick(Sender: TObject);
     procedure DeleteNodeBtnClick(Sender: TObject);
+    procedure DijkstraBtnClick(Sender: TObject);
+    procedure SaveGraph(Sender: TObject);
+    procedure OpenGraph(Sender: TObject);
   private
     { Private declarations }
   public
@@ -124,15 +128,15 @@ begin
   Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
   Form1.Canvas.Pen.Color := clBlack;
   ToAdjMatrix(G, AdjMatrix);
-  if Length(AdjMatrix) = 0 then Exit;
-  
+  if Length(AdjMatrix) = 0 then
+    Exit;
 
   for u := 0 to G.Order - 1 do
   begin
     DrawNode(u + 1, GetCenter(G, u + 1));
     for v := 0 to G.Order - 1 do
     begin
-      if AdjMatrix[u, v] then
+      if AdjMatrix[u, v] <> INFINITY then
         DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
 
     end;
@@ -202,7 +206,7 @@ begin
           end;
         end;
       end;
-    stDFS, stBFS:
+    stDFS, stBFS, stDijkstra:
       begin
         if StartNode = 0 then
         begin
@@ -216,10 +220,14 @@ begin
           begin
 
             // Получение пути с помощью алгоритма
-            if State = stDFS then
-              Path := DFS(G, StartNode, EndNode) // Поиск в глубину
-            else
-              Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+            case State of
+              stDFS:
+                Path := DFS(G, StartNode, EndNode); // Поиск в глубину
+              stBFS:
+                Path := BFS(G, StartNode, EndNode); // Поиск в ширину
+              stDijkstra:
+                Path := Dijkstra(G, StartNode, EndNode); // Поиск в ширину
+            end;
 
             if not isEmpty(Path) then
             begin
@@ -249,16 +257,119 @@ begin
           end;
         end;
       end;
-    stDijkstra:
-      begin
-
-      end;
   end;
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.OpenGraph(Sender: TObject);
+var
+  fVertices: File of TNode;
+  fArcs: File of TItem;
+  Node: TPNode;
+  Neighbour: TPList;
+  i: Integer;
+  deg: Integer;
+begin
+  DestroyGraph(G);
+  InitializeGraph(G);
+
+  System.Assign(fVertices, 'Graph.ver');
+  System.Assign(fArcs, 'Graph.arc');
+
+  Reset(fVertices);
+  Reset(fArcs);
+
+  i := 0;
+  while not Eof(fVertices) do
+  begin
+
+    // Чтение вершины из файла вершин
+    if i = 0 then
+    begin
+
+      // Чтение головы списка вершин
+      New(Node);
+      Read(fVertices, Node^);
+      G.Head := Node;
+    end
+    else
+    begin
+
+      // Чтение не головной вершины
+      New(Node.Next);
+      Node := Node.Next;
+      Read(fVertices, Node^);
+    end;
+
+    // Чтение списка смежности
+    New(Node.Head);
+    if not Eof(fArcs) then
+    begin
+      Read(fArcs, Node.Head^);
+      if Node.Head <> nil then
+      begin
+        Neighbour := Node.Head;
+        while not Eof(fArcs) and (Neighbour.Next <> nil) do
+        begin
+          New(Neighbour.Next);
+          Neighbour := Neighbour.Next;
+          Read(fArcs, Neighbour^);
+        end;
+      end;
+
+    end
+    else
+    begin
+      Dispose(Node.Head);
+      Node.Head := nil;
+    end;
+
+    Inc(i);
+  end;
+
+  G.Tail := Node;
+  G.Order := i;
+  RedrawGraph(G);
+end;
+
+procedure TForm1.SaveGraph(Sender: TObject);
+var
+  fVertices: File of TNode;
+  fArcs: File of TItem;
+  Node: TPNode;
+  Neighbour: TPList;
+begin
+  System.Assign(fVertices, 'Graph.ver');
+  System.Assign(fArcs, 'Graph.arc');
+
+  Rewrite(fVertices);
+  Rewrite(fArcs);
+
+  Node := G.Head;
+  while Node <> nil do
+  begin
+    Write(fVertices, Node^);
+    Neighbour := Node.Head;
+    while Neighbour <> nil do
+    begin
+      Write(fArcs, Neighbour^);
+      Neighbour := Neighbour.Next;
+    end;
+    Node := Node.Next;
+  end;
+end;
+
+procedure TForm1.DijkstraBtnClick(Sender: TObject);
+begin
+  StartNode := 0;
+  if DijkstraBtn.Down then
+    State := stDijkstra
+  else
+    State := stNone;
 end;
 
 procedure TForm1.DeleteNodeBtnClick(Sender: TObject);

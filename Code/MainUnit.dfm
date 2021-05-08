@@ -112,9 +112,11 @@ object Form1: TForm1
       Caption = #1060#1072#1081#1083
       object N4: TMenuItem
         Caption = #1054#1090#1082#1088#1099#1090#1100
+        OnClick = OpenGraph
       end
       object N5: TMenuItem
         Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
+        OnClick = SaveGraph
       end
       object N6: TMenuItem
         Caption = #1069#1082#1089#1087#1086#1088#1090

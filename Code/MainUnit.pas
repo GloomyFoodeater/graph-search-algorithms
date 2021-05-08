@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph, DynStructures;
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
+  DynStructures;
 
 type
   TForm1 = class(TForm)
@@ -37,6 +38,8 @@ type
     procedure DeleteLinkBtnClick(Sender: TObject);
     procedure DeleteNodeBtnClick(Sender: TObject);
     procedure DijkstraBtnClick(Sender: TObject);
+    procedure SaveGraph(Sender: TObject);
+    procedure OpenGraph(Sender: TObject);
   private
     { Private declarations }
   public
@@ -260,6 +263,101 @@ end;
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DestroyGraph(G);
+end;
+
+procedure TForm1.OpenGraph(Sender: TObject);
+var
+  fVertices: File of TNode;
+  fArcs: File of TItem;
+  Node: TPNode;
+  Neighbour: TPList;
+  i: Integer;
+  j: Integer;
+begin
+  DestroyGraph(G);
+  InitializeGraph(G);
+
+  System.Assign(fVertices, 'Graph.ver');
+  System.Assign(fArcs, 'Graph.arc');
+
+  Reset(fVertices);
+  Reset(fArcs);
+
+  i := 0;
+  while not Eof(fVertices) do
+  begin
+
+    // Чтение вершины из файла вершин
+    if i = 0 then
+    begin
+
+      // Чтение головы списка вершин
+      New(Node);
+      Read(fVertices, Node^);
+      G.Head := Node;
+    end
+    else
+    begin
+
+      // Чтение не головной вершины
+      New(Node.Next);
+      Node := Node.Next;
+      Read(fVertices, Node^);
+    end;
+
+    if Node.Deg <> 0 then
+    begin
+      for j := 1 to Node.Deg do
+      begin
+        if j = 1 then
+        begin
+          New(Neighbour);
+          Read(fArcs, Neighbour^);
+          Node.Head := Neighbour;
+        end
+        else
+        begin
+          New(Neighbour.Next);
+          Neighbour := Neighbour.Next;
+          Read(fArcs, Neighbour^);
+        end;
+
+      end;
+    end;
+
+    Inc(i);
+  end;
+
+  G.Tail := Node;
+  G.Order := i;
+  RedrawGraph(G);
+end;
+
+procedure TForm1.SaveGraph(Sender: TObject);
+var
+  fVertices: File of TNode;
+  fArcs: File of TItem;
+  Node: TPNode;
+  Neighbour: TPList;
+begin
+  System.Assign(fVertices, 'Graph.ver');
+  System.Assign(fArcs, 'Graph.arc');
+
+  Rewrite(fVertices);
+  Rewrite(fArcs);
+
+  Node := G.Head;
+  while Node <> nil do
+  begin
+    Write(fVertices, Node^);
+    Neighbour := Node.Head;
+    while Neighbour <> nil do
+    begin
+      Write(fArcs, Neighbour^);
+      Neighbour := Neighbour.Next;
+    end;
+    Node := Node.Next;
+  end;
 end;
 
 procedure TForm1.DijkstraBtnClick(Sender: TObject);
