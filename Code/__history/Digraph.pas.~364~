@@ -11,7 +11,7 @@ type
 
   // Тип списка смежности
 
-  TPAdjVertice = TPItem;
+  TPAdjVertice = TPNode;
   // TODO: Выделить смежную вершину отдельным типом
   { TPAdjVertice = ^TAdjVertice;
 
@@ -57,13 +57,13 @@ function Distance(const p1, p2: TPoint): Integer;
 procedure AddVertice(var G: TGraph; const C: TPoint);
 
 { Процедура добавления дуги в граф }
-procedure AddArc(var G: TGraph; v, u: Integer);
+procedure AddLink(var G: TGraph; v, u: Integer);
 
 { Процедура удаления вершины из графа }
 procedure DeleteVertice(var G: TGraph; v: Integer);
 
 { Процедура удаления дуги из графа }
-procedure DeleteArc(var G: TGraph; v, u: Integer);
+procedure DeleteLink(var G: TGraph; v, u: Integer);
 
 { Процедура инициализации графа }
 procedure InitializeGraph(var G: TGraph);
@@ -154,7 +154,7 @@ begin
 
 end;
 
-procedure AddArc(var G: TGraph; v, u: Integer);
+procedure AddLink(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
   PrevArc, Arc: TPAdjVertice;
@@ -219,7 +219,7 @@ begin
   end;
 end;
 
-procedure DeleteArc(var G: TGraph; v, u: Integer);
+procedure DeleteLink(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
   Arc, PrevArc: TPAdjVertice;

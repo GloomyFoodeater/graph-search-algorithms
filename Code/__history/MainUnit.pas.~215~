@@ -98,8 +98,7 @@ begin
   end;
 
   // Вывод круга
-  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R,
-    Center.y + R);
+  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R, Center.y + R);
 
   // Вывод имени вершины
   Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
@@ -274,9 +273,9 @@ end;
 procedure TForm1.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TPVerticeNode;
+  Neighbour: TPNode;
   i: Integer;
   j: Integer;
 begin
@@ -319,7 +318,7 @@ begin
         begin
           New(Neighbour);
           Read(fArcs, Neighbour^);
-          Node.Head := Neighbour;
+          Node.AdjList := Neighbour;
         end
         else
         begin
@@ -334,7 +333,6 @@ begin
     Inc(i);
   end;
 
-  G.Tail := Node;
   G.Order := i;
   RedrawGraph(G);
 end;
@@ -342,9 +340,9 @@ end;
 procedure TForm1.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TPVerticeNode;
+  Neighbour: TPNode;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
@@ -356,7 +354,7 @@ begin
   while Node <> nil do
   begin
     Write(fVertices, Node^);
-    Neighbour := Node.Head;
+    Neighbour := Node.AdjList;
     while Neighbour <> nil do
     begin
       Write(fArcs, Neighbour^);

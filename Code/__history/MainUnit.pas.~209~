@@ -273,9 +273,9 @@ end;
 procedure TForm1.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
   i: Integer;
   j: Integer;
 begin
@@ -318,7 +318,7 @@ begin
         begin
           New(Neighbour);
           Read(fArcs, Neighbour^);
-          Node.Head := Neighbour;
+          Node.AdjList := Neighbour;
         end
         else
         begin
@@ -341,9 +341,9 @@ end;
 procedure TForm1.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
@@ -355,7 +355,7 @@ begin
   while Node <> nil do
   begin
     Write(fVertices, Node^);
-    Neighbour := Node.Head;
+    Neighbour := Node.AdjList;
     while Neighbour <> nil do
     begin
       Write(fArcs, Neighbour^);

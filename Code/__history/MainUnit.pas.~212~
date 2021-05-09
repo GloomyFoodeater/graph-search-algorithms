@@ -71,11 +71,11 @@ var
 begin
   d := Distance(c1, c2);
 
-  p[0].x := Round(c2.x + 20 * (c1.x - c2.x) / d);
-  p[0].y := Round(c2.y + 20 * (c1.y - c2.y) / d);
+  p[0].x := Round(c2.x + R * (c1.x - c2.x) / d);
+  p[0].y := Round(c2.y + R * (c1.y - c2.y) / d);
 
-  p[1].x := Round(c1.x + 20 * (c2.x - c1.x) / d);
-  p[1].y := Round(c1.y + 20 * (c2.y - c1.y) / d);
+  p[1].x := Round(c1.x + R * (c2.x - c1.x) / d);
+  p[1].y := Round(c1.y + R * (c2.y - c1.y) / d);
 
 end;
 
@@ -98,8 +98,7 @@ begin
   end;
 
   // Вывод круга
-  Form1.Canvas.Ellipse(Center.x - 20, Center.y - 20, Center.x + 20,
-    Center.y + 20);
+  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R, Center.y + R);
 
   // Вывод имени вершины
   Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
@@ -112,7 +111,7 @@ var
   Points: Array [1 .. 2] of TPoint;
 begin
   d := Distance(c1, c2);
-  if d > 20 then
+  if d > R then
   begin
     GetLinkPoints(c1, c2, Points);
     Form1.Canvas.Polyline(Points);
@@ -274,9 +273,9 @@ end;
 procedure TForm1.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
   i: Integer;
   j: Integer;
 begin
@@ -319,7 +318,7 @@ begin
         begin
           New(Neighbour);
           Read(fArcs, Neighbour^);
-          Node.Head := Neighbour;
+          Node.AdjList := Neighbour;
         end
         else
         begin
@@ -334,7 +333,6 @@ begin
     Inc(i);
   end;
 
-  G.Tail := Node;
   G.Order := i;
   RedrawGraph(G);
 end;
@@ -342,9 +340,9 @@ end;
 procedure TForm1.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fArcs: File of TNode;
+  Node: TVerticeList;
+  Neighbour: TList;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
@@ -356,7 +354,7 @@ begin
   while Node <> nil do
   begin
     Write(fVertices, Node^);
-    Neighbour := Node.Head;
+    Neighbour := Node.AdjList;
     while Neighbour <> nil do
     begin
       Write(fArcs, Neighbour^);

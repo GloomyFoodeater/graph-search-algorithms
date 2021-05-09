@@ -272,10 +272,10 @@ end;
 
 procedure TForm1.OpenGraph(Sender: TObject);
 var
-  fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fVertices: File of TVertice;
+  fArcs: File of TNode;
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
   i: Integer;
   j: Integer;
 begin
@@ -297,34 +297,34 @@ begin
     begin
 
       // Чтение головы списка вершин
-      New(Node);
-      Read(fVertices, Node^);
-      G.Head := Node;
+      New(Vertice);
+      Read(fVertices, Vertice^);
+      G.Head := Vertice;
     end
     else
     begin
 
       // Чтение не головной вершины
-      New(Node.Next);
-      Node := Node.Next;
-      Read(fVertices, Node^);
+      New(Vertice.Next);
+      Vertice := Vertice.Next;
+      Read(fVertices, Vertice^);
     end;
 
-    if Node.Deg <> 0 then
+    if Vertice.Deg <> 0 then
     begin
-      for j := 1 to Node.Deg do
+      for j := 1 to Vertice.Deg do
       begin
         if j = 1 then
         begin
-          New(Neighbour);
-          Read(fArcs, Neighbour^);
-          Node.Head := Neighbour;
+          New(AdjVertice);
+          Read(fArcs, AdjVertice^);
+          Vertice.Head := AdjVertice;
         end
         else
         begin
-          New(Neighbour.Next);
-          Neighbour := Neighbour.Next;
-          Read(fArcs, Neighbour^);
+          New(AdjVertice.Next);
+          AdjVertice := AdjVertice.Next;
+          Read(fArcs, AdjVertice^);
         end;
 
       end;
@@ -333,17 +333,16 @@ begin
     Inc(i);
   end;
 
-  G.Tail := Node;
   G.Order := i;
   RedrawGraph(G);
 end;
 
 procedure TForm1.SaveGraph(Sender: TObject);
 var
-  fVertices: File of TVerticeNode;
-  fArcs: File of TItem;
-  Node: TVertice;
-  Neighbour: TPList;
+  fVertices: File of TVertice;
+  fArcs: File of TNode;
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
@@ -351,17 +350,17 @@ begin
   Rewrite(fVertices);
   Rewrite(fArcs);
 
-  Node := G.Head;
-  while Node <> nil do
+  Vertice := G.Head;
+  while Vertice <> nil do
   begin
-    Write(fVertices, Node^);
-    Neighbour := Node.Head;
-    while Neighbour <> nil do
+    Write(fVertices, Vertice^);
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
-      Write(fArcs, Neighbour^);
-      Neighbour := Neighbour.Next;
+      Write(fArcs, AdjVertice^);
+      AdjVertice := AdjVertice.Next;
     end;
-    Node := Node.Next;
+    Vertice := Vertice.Next;
   end;
 end;
 

@@ -101,7 +101,7 @@ begin
     v := Pop(s);
 
     // Цикл А2. Добавление в стек всех соседей вершины
-    for u := 1 to Order do
+    for u := Order downto 1 do
     begin
       if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
       begin

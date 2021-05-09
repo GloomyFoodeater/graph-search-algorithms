@@ -10,7 +10,7 @@ const
 type
 
   // Тип списка смежности
-  TAdjList = TPList;
+  TAdjList = TList;
 
   // Тип вершины графа
   TVerticeList = ^TVerticeNode;
@@ -18,7 +18,7 @@ type
   TVerticeNode = record
     Center: TPoint;
     Number: Integer;
-    Head: TAdjList;
+    AdjList: TAdjList;
     Next: TVerticeList;
     Deg: Integer;
   end;
@@ -26,7 +26,6 @@ type
   // Тип ориентированный граф
   TGraph = record
     Head: TVerticeList;
-    Tail: TVerticeList;
     Order: Integer;
   end;
 
@@ -65,7 +64,7 @@ procedure InitializeGraph(var G: TGraph);
 procedure DestroyGraph(var G: TGraph);
 
 { Процедура преобразования графа в матрицу весов }
-procedure ToWeightMatrix(const G: TGraph; var Matrix: TWeights);
+procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 
 implementation
 
@@ -137,26 +136,20 @@ begin
   begin
     Center := C;
     Number := G.Order;
-    Head := nil;
-    Next := nil;
+    AdjList := nil;
+    Next := G.Head;
     Deg := 0;
   end;
 
-  // Инициализация указателя на новую вершину
-  if G.Head = nil then
-    G.Head := Vertice
-  else
-    G.Tail.Next := Vertice;
-
-  // Перезапись хвоста
-  G.Tail := Vertice;
+  // Запись новой вершины
+  G.Head := Vertice;
 
 end;
 
 procedure AddLink(var G: TGraph; v, u: Integer);
 var
   Vertice: TVerticeList;
-  PrevArc, CurrArc: TAdjList;
+  PrevArc, Arc: TList;
   isFound: Boolean;
 begin
 
@@ -164,35 +157,8 @@ begin
   GetByNumber(G, v, Vertice);
   Inc(Vertice.Deg);
 
-  // Инициализация нового соседа
-  New(CurrArc);
-  CurrArc.Number := u;
-
-  // Получение начального соседа
-  PrevArc := Vertice.Head;
-
-  // Список смежности был пуст или голова была больше нового соседа
-  if (PrevArc = nil) or (PrevArc.Number > u) then
-  begin
-    CurrArc.Next := PrevArc;
-    Vertice.Head := CurrArc;
-  end
-  else
-  begin
-
-    // Цикл А1. Поиск места вставки (предыдущего соседа)
-    isFound := (PrevArc.Next = nil) or (PrevArc.Next.Number > u);
-    while not isFound do
-    begin
-      PrevArc := PrevArc.Next;
-      isFound := (PrevArc.Next = nil) or (PrevArc.Next.Number > u);
-    end; // Конец А1
-
-    // Вставка нового соседа
-    CurrArc.Next := PrevArc.Next;
-    PrevArc.Next := CurrArc;
-
-  end; // Конец if
+  // Сохранение соседа в список смежности
+  Push(Vertice.AdjList, u);
 
 end;
 
@@ -202,79 +168,53 @@ var
   PrevArc, Arc: TAdjList;
 begin
   Dec(G.Order);
+  if v = G.Head.Number then
+  begin
+    Vertice := G.Head;
+    G.Head := G.Head.Next;
+  end
+  else
+  begin
+    GetByNumber(G, v + 1, PrevVertice);
+    Vertice := PrevVertice.Next;
+    PrevVertice.Next := Vertice.Next;
+  end;
 
-  // Цикл А1. Проход по вершинам
-  PrevVertice := nil;
+  DestroyList(Vertice.AdjList);
+  Dispose(Vertice);
+
   Vertice := G.Head;
   while Vertice <> nil do
   begin
+    if Vertice.Number > v then
+      Dec(Vertice.Number);
 
-    // Проверка номера вершины
-    if Vertice.Number = v then
+    PrevArc := nil;
+    Arc := Vertice.AdjList;
+    while Arc <> nil do
     begin
-
-      // Переназначение предыдущего указателя
-      if PrevVertice = nil then
-        G.Head := Vertice.Next
-      else
-        PrevVertice.Next := Vertice.Next;
-
-      // Освобождение списка смежности
-      DestroyList(Vertice.Head);
-      Dispose(Vertice);
-    end // Конец if
-    else
-    begin
-
-      // Уменьшение всех вершин, больших удаляемой на 1
-      if Vertice.Number > v then
-        Dec(Vertice.Number);
-
-      // Цикл А2. Проход по соседям вершины
-      PrevArc := nil;
-      Arc := Vertice.Head;
-      while Arc <> nil do
+      if Arc.Number = v then
       begin
+        if PrevArc = nil then
+          Vertice.AdjList := Arc.Next
+        else
+          PrevArc.Next := Arc.Next;
+        Dispose(Arc);
+      end
+      else if Arc.Number > v then
+        Dec(Arc.Number);
 
-        // Проверка номера соседа
-        if Arc.Number = v then
-        begin
-
-          // Переназначение предыдущего указателя
-          if PrevArc = nil then
-            Vertice.Head := Arc.Next
-          else
-            PrevArc.Next := Arc.Next;
-
-          // Освобождение памяти звена списка
-          Dispose(Arc);
-        end // Конец if
-        else if Arc.Number > v then
-          Dec(Arc.Number);
-
-        // Переход к следующему соседу
-        PrevArc := Arc;
-        Arc := Arc.Next;
-
-      end; // Конец А2
-
-    end; // Конец else
-
-    // Переход к следующей вершине
-    if Vertice.Next <> nil then
-      PrevVertice := Vertice;
+      PrevArc := Arc;
+      Arc := Arc.Next;
+    end;
     Vertice := Vertice.Next;
-  end; // Конец А1
-
-  // Переназначение хвоста списка
-  G.Tail := PrevVertice;
+  end;
 end;
 
 procedure DeleteLink(var G: TGraph; v, u: Integer);
 var
   Vertice: TVerticeList;
-  PrevArc: TAdjList;
-  Arc: TAdjList;
+  Arc, PrevArc: TList;
   isFound: Boolean;
 begin
 
@@ -284,16 +224,16 @@ begin
   Dec(Vertice.Deg);
 
   // Получение первого соседа
-  PrevArc := Vertice.Head;
+  PrevArc := Vertice.AdjList;
 
   // Поиск звена перед звеном с искомым соседом
   if (PrevArc = nil) or (PrevArc.Number = u) then
   begin
     Arc := PrevArc;
     if Arc <> nil then
-      Vertice.Head := Arc.Next
+      Vertice.AdjList := Arc.Next
     else
-      Vertice.Head := nil;
+      Vertice.AdjList := nil;
   end
   else
   begin
@@ -322,7 +262,6 @@ end;
 procedure InitializeGraph(var G: TGraph);
 begin
   G.Head := nil;
-  G.Tail := nil;
   G.Order := 0;
 end;
 
@@ -337,47 +276,41 @@ begin
     Vertice := G.Head;
 
     // Цикл А2. Освобождение списка соседей вершины
-    DestroyList(Vertice.Head);
+    DestroyList(Vertice.AdjList);
 
     G.Head := G.Head.Next;
     Dispose(Vertice);
   end; // Конец А1
 end;
 
-procedure ToWeightMatrix(const G: TGraph; var Matrix: TWeights);
+procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 var
-  i, j: Integer;
+  v, u: Integer;
   Vertice: TVerticeList;
-  Arc: TAdjList;
+  Arc: TList;
 begin
 
   // Инициализация матрицы
   SetLength(Matrix, G.Order, G.Order);
 
-  // Цикл А1. Проход по вершинам
+  for v := 1 to G.Order do
+  begin
+    for u := 1 to G.Order do
+      Matrix[v - 1, u - 1] := INFINITY;
+  end;
+
+  // Цикл А2. Проход по вершинам
   Vertice := G.Head;
-  for i := 0 to G.Order - 1 do
+  while Vertice <> nil do
   begin
 
-    // Цикл А2. Проход по соседям
-    Arc := Vertice.Head;
-    for j := 0 to G.Order - 1 do
+    // Цикл B2. Сохранение весов существующих рёбер
+    Arc := Vertice.AdjList;
+    while Arc <> nil do
     begin
-
-      // Проверка смежности вершин
-      if (Arc <> nil) and (Arc.Number = j + 1) then
-      begin
-
-        // Вершины были смежны
-        Matrix[i, j] := 1;
-
-        // Переход к следующему соседу
-        Arc := Arc.Next;
-      end
-      else
-        Matrix[i, j] := INFINITY;
-      // Вершины не были смежными
-    end; // Конец А2
+      Matrix[Vertice.Number - 1, Arc.Number - 1] := 1;
+      Arc := Arc.Next;
+    end; // Конец B2
 
     // Переход к следующей вершине
     Vertice := Vertice.Next;

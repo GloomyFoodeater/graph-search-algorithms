@@ -4,20 +4,20 @@ interface
 
 type
   // Тип односвязный список с натуральными числами
-  TList = ^TNode;
+  TPItem = ^TItem;
 
-  TNode = record
+  TItem = record
     Number: Integer;
-    Next: TList;
+    Next: TPItem;
   end;
 
   // Тип стек с натуральными числами
-  TStack = TList;
+  TStack = TPItem;
 
   // Тип очередь с натуральными числами
   TQueue = record
-    Head: TList;
-    Tail: TList;
+    Head: TPItem;
+    Tail: TPItem;
   end;
 
   { Процедура инициализации стека }
@@ -27,7 +27,7 @@ procedure InitializeStack(var Stack: TStack);
 procedure InitializeQueue(var Queue: TQueue);
 
 { Процедура очищения списка }
-procedure DestroyList(var Head: TList);
+procedure DestroyList(var Head: TPItem);
 
 { Процедура вставки в стек }
 procedure Push(var Stack: TStack; n: Integer);
@@ -42,7 +42,7 @@ function Pop(var Stack: TStack): Integer;
 function Dequeue(var Queue: TQueue): Integer;
 
 { Функция проверки списка на пустоту }
-function isEmpty(const Head: TList): Boolean;
+function isEmpty(const Head: TPItem): Boolean;
 
 implementation
 
@@ -59,69 +59,69 @@ end;
 
 procedure DestroyList;
 var
-  t: TList;
+  Item: TPItem;
 begin
   // Цикл А1. Освобождение списка
   while Head <> nil do
   begin
-    t := Head;
+    Item := Head;
     Head := Head.Next;
-    Dispose(t);
+    Dispose(Item);
   end; // Конец А1
   Head := nil;
 end;
 
 procedure Push;
 var
-  t: TList; // Вставляемое звено списка
+  Item: TPItem; // Вставляемое звено списка
 begin
 
   // Инициализация нового элемента
-  New(t);
-  t.Number := n;
-  t.Next := nil;
+  New(Item);
+  Item.Number := n;
+  Item.Next := nil;
 
   // Перемещение вершины стека
   if not isEmpty(Stack) then
-    t.Next := Stack;
-  Stack := t;
+    Item.Next := Stack;
+  Stack := Item;
 
 end;
 
 procedure Enqueue;
 var
-  t: TList; // Вставляемое звено списка
+  Item: TPItem; // Вставляемое звено списка
 begin
 
   // Инициализация нового элемента
-  New(t);
-  t.Number := n;
-  t.Next := nil;
+  New(Item);
+  Item.Number := n;
+  Item.Next := nil;
 
   // Сохранение нового элемента
   if not isEmpty(Queue.Head) then
-    Queue.Tail.Next := t
+    Queue.Tail.Next := Item
   else
-    Queue.Head := t;
+    Queue.Head := Item;
 
   // Перемещение хвоста
-  Queue.Tail := t;
+  Queue.Tail := Item;
 end;
 
 function Pop;
 var
-  t: TList; // Извлекаемое звено списка
+  Item: TPItem; // Извлекаемое звено списка
 begin
 
   if not isEmpty(Stack) then
   begin
     // Перемещение вершины стека
-    t := Stack;
+    Item := Stack;
     Stack := Stack.Next;
 
     // Извлечение элемента с очисткой указателя
-    Result := t.Number;
-    Dispose(t);
+    Result := Item.Number;
+    Dispose(Item);
   end
   else
     Result := 0; // Ошибка при извлечении
@@ -130,7 +130,7 @@ end;
 
 function Dequeue;
 var
-  t: TList; // Извлекаемое звено списка
+  Item: TPItem; // Извлекаемое звено списка
 begin
   if not isEmpty(Queue.Head) then
   begin
@@ -138,13 +138,13 @@ begin
     // Перемещение начала очереди
     with Queue do
     begin
-      t := Head;
+      Item := Head;
       Head := Head.Next;
     end;
 
     // Извлечение элемента с очисткой указателя
-    Result := t.Number;
-    Dispose(t);
+    Result := Item.Number;
+    Dispose(Item);
   end
   else
     Result := 0; // Ошибка при извлечении

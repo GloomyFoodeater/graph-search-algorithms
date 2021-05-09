@@ -11,7 +11,7 @@ type
 
   // Тип списка смежности
 
-  TPAdjVertice = TPItem;
+  TPAdjVertice = TPNode;
   // TODO: Выделить смежную вершину отдельным типом
   { TPAdjVertice = ^TAdjVertice;
 
