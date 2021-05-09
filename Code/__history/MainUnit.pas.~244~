@@ -56,7 +56,6 @@ var
   G: TGraph;
   StartVertice: TPVertice = nil;
   StartVerticeCenter: TPoint;
-  isToRedraw: Boolean = True;
 
 const
   R = 40;
@@ -156,9 +155,6 @@ begin
 
   // Вывод имени вершины
   Form1.Canvas.TextOut(PosX + 1, Vertice.Center.y - 6, Caption);
-
-  Form1.Canvas.Pen.Color := clBlack;
-  Form1.Canvas.Brush.Color := clWhite;
 end;
 
 { Процедура рисования ребра графа }
@@ -171,9 +167,6 @@ begin
   if d > R then
   begin
     GetArcPoints(Src.Center, Dest.Center, Points);
-    if (Src.Design = dgVisited) and (Dest.Design = dgVisited) then
-      Form1.Canvas.Pen.Color := clTeal;
-
     Form1.Canvas.Polyline(Points);
     DrawVertice(Src);
     DrawVertice(Dest);
@@ -299,25 +292,22 @@ begin
                   EndVertice.Number, Path);
             end;
 
-            // Вспомогательное сообщение о несуществовании пути
             if isEmpty(Path) then
-            begin
-
+              // Вспомогательное сообщение о несуществовании пути
               sPath := 'Вершина ' + IntToStr(EndVertice.Number) +
                 ' не достижима из вершины ' +
                 IntToStr(StartVertice.Number) + '.';
-              MessageBox(Handle, PChar(sPath),
-                PChar('Результаты поиска'), MB_OK);
-            end;
 
             // Запись пути в строку
             while not isEmpty(Path) do
             begin
-              v := Pop(Path);
+              sPath := sPath + '->' + IntToStr(Pop(Path));
               GetByNumber(G, v, Vertice);
-              Vertice.Design := dgVisited;
-              RedrawGraph(G);
+
             end;
+
+            // Вывод пути
+            MessageBox(Handle, PChar(sPath), PChar('Результаты поиска'), MB_OK);
 
             // Обнуление начальной и конечной вершины
             StartVertice := 0;

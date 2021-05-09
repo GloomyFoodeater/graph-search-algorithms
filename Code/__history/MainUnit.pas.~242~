@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph, Math,
   DynStructures;
 
 type
@@ -47,15 +47,15 @@ type
   end;
 
   // Тип режима работы с формой
-  TClickState = (stAddNode, stAddLink, stDeleteNode, stDeleteLink, stDFS, stBFS,
-    stDijkstra, stNone);
+  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stDFS,
+    stBFS, stDijkstra, stNone);
 
 var
   Form1: TForm1;
   State: TClickState;
   G: TGraph;
-  StartNode: Integer = 0;
-  StartNodeCenter: TPoint;
+  StartVertice: TPVertice = nil;
+  StartVerticeCenter: TPoint;
 
 const
   R = 40;
@@ -65,83 +65,134 @@ implementation
 {$R *.dfm}
 
 { Процедура вычисления координат концов ребра на холсте }
-procedure GetLinkPoints(c1, c2: TPoint; var p: Array of TPoint);
+procedure GetArcPoints(c1, c2: TPoint; var p: Array of TPoint);
+const
+  dAngle = (45 / 180) * pi;
 var
+  StartX, StartY: Integer;
+  EndX, EndY: Integer;
+  MiddleX, MiddleY: Integer;
   d: Integer;
+  Angle: Real;
+  Sign: Integer;
 begin
   d := Distance(c1, c2);
+  StartX := Round(c2.x + R * (c1.x - c2.x) / d);
+  StartY := Round(c2.y + R * (c1.y - c2.y) / d);
 
-  p[0].x := Round(c2.x + R * (c1.x - c2.x) / d);
-  p[0].y := Round(c2.y + R * (c1.y - c2.y) / d);
+  EndX := Round(c1.x + R * (c2.x - c1.x) / d);
+  EndY := Round(c1.y + R * (c2.y - c1.y) / d);
 
-  p[1].x := Round(c1.x + R * (c2.x - c1.x) / d);
-  p[1].y := Round(c1.y + R * (c2.y - c1.y) / d);
+  MiddleX := StartX + ((EndX - StartX) div 2);
+  MiddleY := StartY + ((EndY - StartY) div 2);
+
+  p[0].x := StartX;
+  p[0].y := StartY;
+
+  p[1].x := MiddleX;
+  p[1].y := MiddleY;
+
+  p[3] := p[1];
+  p[5] := p[1];
+
+  p[6].x := EndX;
+  p[6].y := EndY;
+
+  Angle := ArcSin((StartY - EndY) / (Distance(p[0], p[6])));
+
+  if (StartX - EndX) <> 0 then
+    Sign := Round((StartX - EndX) / abs(StartX - EndX))
+  else
+    Sign := 1;
+
+  p[2].x := MiddleX - Sign * trunc(cos(dAngle - Sign * Angle) * (R div 2));
+  p[2].y := MiddleY + Sign * trunc(sin(dAngle - Sign * Angle) * (R div 2));
+
+  p[4].x := MiddleX - Sign * trunc(cos(dAngle + Sign * Angle) * (R div 2));
+  p[4].y := MiddleY - Sign * trunc(sin(dAngle + Sign * Angle) * (R div 2));
 
 end;
 
 { Процедура рисования вершины графа }
-procedure DrawNode(u: Integer; Center: TPoint);
+procedure DrawVertice(const Vertice: TPVertice);
 var
-  Caption: String; // Имя вершины
+  Caption: String;
   PosX: Integer; // Левый верхний край текста
   Copy: Integer; // Копия номера вершины
 begin
 
   // Получение имени вершины и его x-координаты
-  Str(u, Caption);
-  Copy := u;
-  PosX := Center.x;
+  Str(Vertice.Number, Caption);
+  Copy := Vertice.Number;
+  PosX := Vertice.Center.x;
   while Copy <> 0 do
   begin
     Copy := Copy div 10;
     PosX := PosX - 4;
   end;
 
+  case Vertice.Design of
+    dgPassive:
+      begin
+        Form1.Canvas.Pen.Color := clBlack;
+        Form1.Canvas.Brush.Color := clWhite;
+      end;
+    dgActive:
+      begin
+        Form1.Canvas.Pen.Color := clRed;
+        Form1.Canvas.Brush.Color := clCream;
+      end;
+    dgVisited:
+      begin
+        Form1.Canvas.Pen.Color := clTeal;
+        Form1.Canvas.Brush.Color := clLime;
+      end;
+  end;
+
   // Вывод круга
-  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R, Center.y + R);
+  with Vertice.Center do
+    Form1.Canvas.Ellipse(x - R, y - R, x + R, y + R);
 
   // Вывод имени вершины
-  Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
+  Form1.Canvas.TextOut(PosX + 1, Vertice.Center.y - 6, Caption);
 end;
 
 { Процедура рисования ребра графа }
-procedure DrawLink(G: TGraph; c1, c2: TPoint);
+procedure DrawArc(const Src, Dest: TPVertice);
 var
   d: Integer;
-  Points: Array [1 .. 2] of TPoint;
+  Points: Array [0 .. 6] of TPoint;
 begin
-  d := Distance(c1, c2);
+  d := Distance(Src.Center, Dest.Center);
   if d > R then
   begin
-    GetLinkPoints(c1, c2, Points);
+    GetArcPoints(Src.Center, Dest.Center, Points);
     Form1.Canvas.Polyline(Points);
-
-    Form1.Canvas.Ellipse(Points[1].x - 5, Points[1].y - 5, Points[1].x + 5,
-      Points[1].y + 5);
+    DrawVertice(Src);
+    DrawVertice(Dest);
   end;
 end;
 
 procedure RedrawGraph(const G: TGraph);
 var
-  Weights: TWeights;
-  u, v: Integer;
+  Vertice, AdjVertice: TPVertice;
+  Arc: TPAdjVertice;
 begin
   Form1.Canvas.Pen.Color := clWhite;
   Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
   Form1.Canvas.Pen.Color := clBlack;
-  ToWeightMatrix(G, Weights);
-  if Length(Weights) = 0 then
-    Exit;
 
-  for u := 0 to G.Order - 1 do
+  Vertice := G.Head;
+  while Vertice <> nil do
   begin
-    DrawNode(u + 1, GetCenter(G, u + 1));
-    for v := 0 to G.Order - 1 do
+    Arc := Vertice.Head;
+    while Arc <> nil do
     begin
-      if Weights[u, v] <> INFINITY then
-        DrawLink(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
-
+      GetByNumber(G, Arc.Number, AdjVertice);
+      DrawArc(Vertice, AdjVertice);
+      Arc := Arc.Next;
     end;
+    Vertice := Vertice.Next;
   end;
 
 end;
@@ -150,96 +201,103 @@ end;
 procedure TForm1.FormClick(Sender: TObject);
 var
   Pos: TPoint;
-  EndNode: Integer;
+  EndVertice: TPVertice;
   d: Integer;
   Path: TStack;
   sPath: String;
   AdjMatrix: TWeights;
+  Vertice, AdjVertice: TPVertice;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
   case State of
-    stAddNode: // Добавление вершины графа
+    stAddVertice:
+      // Добавление вершины графа
       begin
-        AddNode(G, Pos);
-        DrawNode(G.Order, Pos);
+        AddVertice(G, Pos);
+        GetByNumber(G, G.Order, Vertice);
+        DrawVertice(Vertice);
       end;
-    stAddLink:
+    stAddArc:
       begin
-        if StartNode = 0 then
+        if StartVertice = nil then
         begin
-          Centralize(G, Pos, R, StartNode);
-          StartNodeCenter := Pos;
+          Centralize(G, Pos, R, StartVertice);
+          StartVerticeCenter := Pos;
         end
         else
         begin
-          Centralize(G, Pos, R, EndNode);
-          if (EndNode <> 0) and (StartNode <> EndNode) then
+          Centralize(G, Pos, R, EndVertice);
+          if (EndVertice <> nil) and (StartVertice <> EndVertice) then
           begin
-            AddLink(G, StartNode, EndNode);
-            DrawLink(G, StartNodeCenter, Pos);
-            StartNode := 0;
-            EndNode := 0;
+            AddArc(G, StartVertice.Number, EndVertice.Number);
+            DrawArc(StartVertice, EndVertice);
+            StartVertice := nil;
           end;
         end;
       end;
-    stDeleteNode:
+    stDeleteVertice:
       begin
-        Centralize(G, Pos, R, StartNode);
-        if StartNode <> 0 then
+        Centralize(G, Pos, R, StartVertice);
+        if StartVertice <> nil then
         begin
-          if (StartNode >= 1) and (StartNode < G.Order) then
-            DeleteNode(G, StartNode);
+          if (StartVertice.Number >= 1) and (StartVertice.Number <= G.Order)
+          then
+            DeleteVertice(G, StartVertice.Number);
           RedrawGraph(G);
         end;
       end;
-    stDeleteLink:
+    stDeleteArc:
       begin
-        if StartNode = 0 then
+        if StartVertice = nil then
         begin
-          Centralize(G, Pos, R, StartNode);
+          Centralize(G, Pos, R, StartVertice);
         end
         else
         begin
-          Centralize(G, Pos, R, EndNode);
-          if (EndNode <> 0) and (StartNode <> EndNode) then
+          Centralize(G, Pos, R, EndVertice);
+          if (EndVertice <> nil) and (StartVertice <> EndVertice) then
           begin
-            DeleteLink(G, StartNode, EndNode);
+            DeleteArc(G, StartVertice.Number, EndVertice.Number);
             RedrawGraph(G);
-            StartNode := 0;
+            StartVertice := nil;
           end;
         end;
       end;
     stDFS, stBFS, stDijkstra:
       begin
-        if StartNode = 0 then
+        if StartVertice = nil then
         begin
-          Centralize(G, Pos, R, StartNode);
-          StartNodeCenter := Pos;
+          Centralize(G, Pos, R, StartVertice);
+          StartVerticeCenter := Pos;
         end
         else
         begin
-          Centralize(G, Pos, R, EndNode);
-          if (EndNode <> 0) then
+          Centralize(G, Pos, R, EndVertice);
+          if (EndVertice <> nil) then
           begin
 
             ToWeightMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                DFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в глубину
+                DFS(AdjMatrix, StartVertice.Number, EndVertice.Number, Path);
+              // Поиск в глубину
               stBFS:
-                BFS(AdjMatrix, StartNode, EndNode, Path); // Поиск в ширину
+                BFS(AdjMatrix, StartVertice.Number, EndVertice.Number, Path);
+              // Поиск в ширину
               stDijkstra:
-                Dijkstra(AdjMatrix, StartNode, EndNode, Path);
+                Dijkstra(AdjMatrix, StartVertice.Number,
+                  EndVertice.Number, Path);
             end;
 
             if not isEmpty(Path) then
             begin
 
               // Запись вспомогательного сообщения
-              sPath := 'Найденный путь из вершины ' + IntToStr(StartNode) +
-                ' в вершину ' + IntToStr(EndNode) + ':'#13#10;
+              sPath := 'Найденный путь из вершины ' +
+                IntToStr(StartVertice.Number) + ' в вершину ' +
+                IntToStr(EndVertice.Number) + ':'#13#10;
 
               // Получение 1-го элемента пути
               sPath := sPath + IntToStr(Pop(Path));
@@ -247,8 +305,9 @@ begin
             else
 
               // Вспомогательное сообщение о несуществовании пути
-              sPath := 'Вершина ' + IntToStr(EndNode) +
-                ' не достижима из вершины ' + IntToStr(StartNode) + '.';
+              sPath := 'Вершина ' + IntToStr(EndVertice.Number) +
+                ' не достижима из вершины ' +
+                IntToStr(StartVertice.Number) + '.';
 
             // Запись пути в строку
             while not isEmpty(Path) do
@@ -258,7 +317,7 @@ begin
             MessageBox(Handle, PChar(sPath), PChar('Результаты поиска'), MB_OK);
 
             // Обнуление начальной и конечной вершины
-            StartNode := 0;
+            StartVertice := 0;
           end;
         end;
       end;
@@ -272,10 +331,10 @@ end;
 
 procedure TForm1.OpenGraph(Sender: TObject);
 var
-  fVertices: File of TVerticeNode;
-  fArcs: File of TNode;
-  Node: TVerticeList;
-  Neighbour: TPNode;
+  fVertices: File of TVertice;
+  fArcs: File of TItem;
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
   i: Integer;
   j: Integer;
 begin
@@ -297,34 +356,34 @@ begin
     begin
 
       // Чтение головы списка вершин
-      New(Node);
-      Read(fVertices, Node^);
-      G.Head := Node;
+      New(Vertice);
+      Read(fVertices, Vertice^);
+      G.Head := Vertice;
     end
     else
     begin
 
       // Чтение не головной вершины
-      New(Node.Next);
-      Node := Node.Next;
-      Read(fVertices, Node^);
+      New(Vertice.Next);
+      Vertice := Vertice.Next;
+      Read(fVertices, Vertice^);
     end;
 
-    if Node.Deg <> 0 then
+    if Vertice.Deg <> 0 then
     begin
-      for j := 1 to Node.Deg do
+      for j := 1 to Vertice.Deg do
       begin
         if j = 1 then
         begin
-          New(Neighbour);
-          Read(fArcs, Neighbour^);
-          Node.AdjList := Neighbour;
+          New(AdjVertice);
+          Read(fArcs, AdjVertice^);
+          Vertice.Head := AdjVertice;
         end
         else
         begin
-          New(Neighbour.Next);
-          Neighbour := Neighbour.Next;
-          Read(fArcs, Neighbour^);
+          New(AdjVertice.Next);
+          AdjVertice := AdjVertice.Next;
+          Read(fArcs, AdjVertice^);
         end;
 
       end;
@@ -339,10 +398,10 @@ end;
 
 procedure TForm1.SaveGraph(Sender: TObject);
 var
-  fVertices: File of TVerticeNode;
-  fArcs: File of TNode;
-  Node: TVerticeList;
-  Neighbour: TPNode;
+  fVertices: File of TVertice;
+  fArcs: File of TItem;
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
 begin
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
@@ -350,23 +409,23 @@ begin
   Rewrite(fVertices);
   Rewrite(fArcs);
 
-  Node := G.Head;
-  while Node <> nil do
+  Vertice := G.Head;
+  while Vertice <> nil do
   begin
-    Write(fVertices, Node^);
-    Neighbour := Node.AdjList;
-    while Neighbour <> nil do
+    Write(fVertices, Vertice^);
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
-      Write(fArcs, Neighbour^);
-      Neighbour := Neighbour.Next;
+      Write(fArcs, AdjVertice^);
+      AdjVertice := AdjVertice.Next;
     end;
-    Node := Node.Next;
+    Vertice := Vertice.Next;
   end;
 end;
 
 procedure TForm1.DijkstraBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if DijkstraBtn.Down then
     State := stDijkstra
   else
@@ -375,25 +434,25 @@ end;
 
 procedure TForm1.DeleteNodeBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if DeleteNodeBtn.Down then
-    State := stDeleteNode
+    State := stDeleteVertice
   else
     State := stNone;
 end;
 
 procedure TForm1.DeleteLinkBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if DeleteLinkBtn.Down then
-    State := stDeleteLink
+    State := stDeleteArc
   else
     State := stNone;
 end;
 
 procedure TForm1.BFSbtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if BFSbtn.Down then
     State := stBFS
   else
@@ -402,7 +461,7 @@ end;
 
 procedure TForm1.DFSBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if DFSBtn.Down then
     State := stDFS
   else
@@ -411,18 +470,18 @@ end;
 
 procedure TForm1.AddLinkBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if AddLinkBtn.Down then
-    State := stAddLink
+    State := stAddArc
   else
     State := stNone;
 end;
 
 procedure TForm1.AddNodeBtnClick(Sender: TObject);
 begin
-  StartNode := 0;
+  StartVertice := 0;
   if AddNodeBtn.Down then
-    State := stAddNode
+    State := stAddVertice
   else
     State := stNone;
 end;
@@ -433,17 +492,20 @@ const
     y: 400), (x: 300; y: 500), (x: 300; y: 100));
 var
   i: Integer;
+  Vertice: TPVertice;
 begin
   InitializeGraph(G);
   for i := 1 to 5 do
   begin
-    AddNode(G, p[i]);
-    DrawNode(i, p[i]);
+    AddVertice(G, p[i]);
+    GetByNumber(G, i, Vertice);
+    DrawVertice(Vertice);
   end;
   for i := 2 to 5 do
   begin
-    AddLink(G, 1, i);
-    DrawLink(G, GetCenter(G, 1), GetCenter(G, i));
+    AddArc(G, 1, i);
+    GetByNumber(G, i, Vertice);
+    DrawArc(Vertice, Vertice);
   end;
   Button1.Visible := false;
 end;

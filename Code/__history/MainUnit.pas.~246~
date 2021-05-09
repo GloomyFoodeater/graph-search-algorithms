@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph, Math,
   DynStructures;
 
 type
@@ -47,14 +47,14 @@ type
   end;
 
   // Тип режима работы с формой
-  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stDFS, stBFS,
-    stDijkstra, stNone);
+  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stDFS,
+    stBFS, stDijkstra, stNone);
 
 var
   Form1: TForm1;
   State: TClickState;
   G: TGraph;
-  StartVertice: Integer = 0;
+  StartVertice: TPVertice = nil;
   StartVerticeCenter: TPoint;
 
 const
@@ -66,82 +66,133 @@ implementation
 
 { Процедура вычисления координат концов ребра на холсте }
 procedure GetArcPoints(c1, c2: TPoint; var p: Array of TPoint);
+const
+  dAngle = (45 / 180) * pi;
 var
+  StartX, StartY: Integer;
+  EndX, EndY: Integer;
+  MiddleX, MiddleY: Integer;
   d: Integer;
+  Angle: Real;
+  Sign: Integer;
 begin
   d := Distance(c1, c2);
+  StartX := Round(c2.x + R * (c1.x - c2.x) / d);
+  StartY := Round(c2.y + R * (c1.y - c2.y) / d);
 
-  p[0].x := Round(c2.x + R * (c1.x - c2.x) / d);
-  p[0].y := Round(c2.y + R * (c1.y - c2.y) / d);
+  EndX := Round(c1.x + R * (c2.x - c1.x) / d);
+  EndY := Round(c1.y + R * (c2.y - c1.y) / d);
 
-  p[1].x := Round(c1.x + R * (c2.x - c1.x) / d);
-  p[1].y := Round(c1.y + R * (c2.y - c1.y) / d);
+  MiddleX := StartX + ((EndX - StartX) div 2);
+  MiddleY := StartY + ((EndY - StartY) div 2);
+
+  p[0].x := StartX;
+  p[0].y := StartY;
+
+  p[1].x := MiddleX;
+  p[1].y := MiddleY;
+
+  p[3] := p[1];
+  p[5] := p[1];
+
+  p[6].x := EndX;
+  p[6].y := EndY;
+
+  Angle := ArcSin((StartY - EndY) / (Distance(p[0], p[6])));
+
+  if (StartX - EndX) <> 0 then
+    Sign := Round((StartX - EndX) / abs(StartX - EndX))
+  else
+    Sign := 1;
+
+  p[2].x := MiddleX - Sign * trunc(cos(dAngle - Sign * Angle) * (R div 2));
+  p[2].y := MiddleY + Sign * trunc(sin(dAngle - Sign * Angle) * (R div 2));
+
+  p[4].x := MiddleX - Sign * trunc(cos(dAngle + Sign * Angle) * (R div 2));
+  p[4].y := MiddleY - Sign * trunc(sin(dAngle + Sign * Angle) * (R div 2));
 
 end;
 
 { Процедура рисования вершины графа }
-procedure DrawVertice(u: Integer; Center: TPoint);
+procedure DrawVertice(const Vertice: TPVertice);
 var
-  Caption: String; // Имя вершины
+  Caption: String;
   PosX: Integer; // Левый верхний край текста
   Copy: Integer; // Копия номера вершины
 begin
 
   // Получение имени вершины и его x-координаты
-  Str(u, Caption);
-  Copy := u;
-  PosX := Center.x;
+  Str(Vertice.Number, Caption);
+  Copy := Vertice.Number;
+  PosX := Vertice.Center.x;
   while Copy <> 0 do
   begin
     Copy := Copy div 10;
     PosX := PosX - 4;
   end;
 
+  case Vertice.Design of
+    dgPassive:
+      begin
+        Form1.Canvas.Pen.Color := clBlack;
+        Form1.Canvas.Brush.Color := clWhite;
+      end;
+    dgActive:
+      begin
+        Form1.Canvas.Pen.Color := clRed;
+        Form1.Canvas.Brush.Color := clCream;
+      end;
+    dgVisited:
+      begin
+        Form1.Canvas.Pen.Color := clTeal;
+        Form1.Canvas.Brush.Color := clLime;
+      end;
+  end;
+
   // Вывод круга
-  Form1.Canvas.Ellipse(Center.x - R, Center.y - R, Center.x + R, Center.y + R);
+  with Vertice.Center do
+    Form1.Canvas.Ellipse(x - R, y - R, x + R, y + R);
 
   // Вывод имени вершины
-  Form1.Canvas.TextOut(PosX + 1, Center.y - 6, Caption);
+  Form1.Canvas.TextOut(PosX + 1, Vertice.Center.y - 6, Caption);
 end;
 
 { Процедура рисования ребра графа }
-procedure DrawArc(G: TGraph; c1, c2: TPoint);
+procedure DrawArc(const Src, Dest: TPVertice);
 var
   d: Integer;
-  Points: Array [1 .. 2] of TPoint;
+  Points: Array [0 .. 6] of TPoint;
 begin
-  d := Distance(c1, c2);
+  d := Distance(Src.Center, Dest.Center);
   if d > R then
   begin
-    GetArcPoints(c1, c2, Points);
+    GetArcPoints(Src.Center, Dest.Center, Points);
     Form1.Canvas.Polyline(Points);
-
-    Form1.Canvas.Ellipse(Points[1].x - 5, Points[1].y - 5, Points[1].x + 5,
-      Points[1].y + 5);
+    DrawVertice(Src);
+    DrawVertice(Dest);
   end;
 end;
 
 procedure RedrawGraph(const G: TGraph);
 var
-  Weights: TWeights;
-  u, v: Integer;
+  Vertice, AdjVertice: TPVertice;
+  Arc: TPAdjVertice;
 begin
   Form1.Canvas.Pen.Color := clWhite;
   Form1.Canvas.Rectangle(0, 0, Form1.Width, Form1.Height);
   Form1.Canvas.Pen.Color := clBlack;
-  ToWeightMatrix(G, Weights);
-  if Length(Weights) = 0 then
-    Exit;
 
-  for u := 0 to G.Order - 1 do
+  Vertice := G.Head;
+  while Vertice <> nil do
   begin
-    DrawVertice(u + 1, GetCenter(G, u + 1));
-    for v := 0 to G.Order - 1 do
+    Arc := Vertice.Head;
+    while Arc <> nil do
     begin
-      if Weights[u, v] <> INFINITY then
-        DrawArc(G, GetCenter(G, u + 1), GetCenter(G, v + 1));
-
+      GetByNumber(G, Arc.Number, AdjVertice);
+      DrawArc(Vertice, AdjVertice);
+      Arc := Arc.Next;
     end;
+    Vertice := Vertice.Next;
   end;
 
 end;
@@ -150,23 +201,27 @@ end;
 procedure TForm1.FormClick(Sender: TObject);
 var
   Pos: TPoint;
-  EndVertice: Integer;
+  EndVertice: TPVertice;
   d: Integer;
   Path: TStack;
   sPath: String;
   AdjMatrix: TWeights;
+  Vertice, AdjVertice: TPVertice;
+  v: Integer;
 begin
   // Получение координаты курсора
   Pos := ScreenToClient(Mouse.CursorPos);
   case State of
-    stAddVertice: // Добавление вершины графа
+    stAddVertice:
+      // Добавление вершины графа
       begin
         AddVertice(G, Pos);
-        DrawVertice(G.Order, Pos);
+        GetByNumber(G, G.Order, Vertice);
+        DrawVertice(Vertice);
       end;
     stAddArc:
       begin
-        if StartVertice = 0 then
+        if StartVertice = nil then
         begin
           Centralize(G, Pos, R, StartVertice);
           StartVerticeCenter := Pos;
@@ -174,45 +229,45 @@ begin
         else
         begin
           Centralize(G, Pos, R, EndVertice);
-          if (EndVertice <> 0) and (StartVertice <> EndVertice) then
+          if (EndVertice <> nil) and (StartVertice <> EndVertice) then
           begin
-            AddArc(G, StartVertice, EndVertice);
-            DrawArc(G, StartVerticeCenter, Pos);
-            StartVertice := 0;
-            EndVertice := 0;
+            AddArc(G, StartVertice.Number, EndVertice.Number);
+            DrawArc(StartVertice, EndVertice);
+            StartVertice := nil;
           end;
         end;
       end;
     stDeleteVertice:
       begin
         Centralize(G, Pos, R, StartVertice);
-        if StartVertice <> 0 then
+        if StartVertice <> nil then
         begin
-          if (StartVertice >= 1) and (StartVertice < G.Order) then
-            DeleteVertice(G, StartVertice);
+          if (StartVertice.Number >= 1) and (StartVertice.Number <= G.Order)
+          then
+            DeleteVertice(G, StartVertice.Number);
           RedrawGraph(G);
         end;
       end;
     stDeleteArc:
       begin
-        if StartVertice = 0 then
+        if StartVertice = nil then
         begin
           Centralize(G, Pos, R, StartVertice);
         end
         else
         begin
           Centralize(G, Pos, R, EndVertice);
-          if (EndVertice <> 0) and (StartVertice <> EndVertice) then
+          if (EndVertice <> nil) and (StartVertice <> EndVertice) then
           begin
-            DeleteArc(G, StartVertice, EndVertice);
+            DeleteArc(G, StartVertice.Number, EndVertice.Number);
             RedrawGraph(G);
-            StartVertice := 0;
+            StartVertice := nil;
           end;
         end;
       end;
     stDFS, stBFS, stDijkstra:
       begin
-        if StartVertice = 0 then
+        if StartVertice = nil then
         begin
           Centralize(G, Pos, R, StartVertice);
           StartVerticeCenter := Pos;
@@ -220,42 +275,40 @@ begin
         else
         begin
           Centralize(G, Pos, R, EndVertice);
-          if (EndVertice <> 0) then
+          if (EndVertice <> nil) then
           begin
 
             ToWeightMatrix(G, AdjMatrix);
             // Получение пути с помощью алгоритма
             case State of
               stDFS:
-                DFS(AdjMatrix, StartVertice, EndVertice, Path); // Поиск в глубину
+                DFS(AdjMatrix, StartVertice.Number, EndVertice.Number, Path);
+              // Поиск в глубину
               stBFS:
-                BFS(AdjMatrix, StartVertice, EndVertice, Path); // Поиск в ширину
+                BFS(AdjMatrix, StartVertice.Number, EndVertice.Number, Path);
+              // Поиск в ширину
               stDijkstra:
-                Dijkstra(AdjMatrix, StartVertice, EndVertice, Path);
+                Dijkstra(AdjMatrix, StartVertice.Number,
+                  EndVertice.Number, Path);
             end;
 
-            if not isEmpty(Path) then
+            // Вспомогательное сообщение о несуществовании пути
+            if isEmpty(Path) then
             begin
 
-              // Запись вспомогательного сообщения
-              sPath := 'Найденный путь из вершины ' + IntToStr(StartVertice) +
-                ' в вершину ' + IntToStr(EndVertice) + ':'#13#10;
-
-              // Получение 1-го элемента пути
-              sPath := sPath + IntToStr(Pop(Path));
-            end
-            else
-
-              // Вспомогательное сообщение о несуществовании пути
-              sPath := 'Вершина ' + IntToStr(EndVertice) +
-                ' не достижима из вершины ' + IntToStr(StartVertice) + '.';
+              sPath := 'Вершина ' + IntToStr(EndVertice.Number) +
+                ' не достижима из вершины ' +
+                IntToStr(StartVertice.Number) + '.';
+              MessageBox(Handle, PChar(sPath),
+                PChar('Результаты поиска'), MB_OK);
+            end;
 
             // Запись пути в строку
             while not isEmpty(Path) do
-              sPath := sPath + '->' + IntToStr(Pop(Path));
+            begin
+              GetByNumber(G, v, Vertice);
 
-            // Вывод пути
-            MessageBox(Handle, PChar(sPath), PChar('Результаты поиска'), MB_OK);
+            end;
 
             // Обнуление начальной и конечной вершины
             StartVertice := 0;
@@ -273,7 +326,7 @@ end;
 procedure TForm1.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
-  fArcs: File of TNode;
+  fArcs: File of TItem;
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
   i: Integer;
@@ -340,7 +393,7 @@ end;
 procedure TForm1.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
-  fArcs: File of TNode;
+  fArcs: File of TItem;
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
 begin
@@ -433,17 +486,20 @@ const
     y: 400), (x: 300; y: 500), (x: 300; y: 100));
 var
   i: Integer;
+  Vertice: TPVertice;
 begin
   InitializeGraph(G);
   for i := 1 to 5 do
   begin
     AddVertice(G, p[i]);
-    DrawVertice(i, p[i]);
+    GetByNumber(G, i, Vertice);
+    DrawVertice(Vertice);
   end;
   for i := 2 to 5 do
   begin
     AddArc(G, 1, i);
-    DrawArc(G, GetCenter(G, 1), GetCenter(G, i));
+    GetByNumber(G, i, Vertice);
+    DrawArc(Vertice, Vertice);
   end;
   Button1.Visible := false;
 end;

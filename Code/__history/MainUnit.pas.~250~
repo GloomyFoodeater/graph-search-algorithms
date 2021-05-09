@@ -56,7 +56,6 @@ var
   G: TGraph;
   StartVertice: TPVertice = nil;
   StartVerticeCenter: TPoint;
-  isToRedraw: Boolean = True;
 
 const
   R = 40;

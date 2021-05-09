@@ -4,20 +4,20 @@ interface
 
 type
   // Тип односвязный список с натуральными числами
-  TPList = ^TItem;
+  TPItem = ^TItem;
 
   TItem = record
-    Elem: Cardinal;
-    Next: TPList;
+    Number: Integer;
+    Next: TPItem;
   end;
 
   // Тип стек с натуральными числами
-  TStack = TPList;
+  TStack = TPItem;
 
   // Тип очередь с натуральными числами
   TQueue = record
-    Head: TPList;
-    Tail: TPList;
+    Head: TPItem;
+    Tail: TPItem;
   end;
 
   { Процедура инициализации стека }
@@ -26,26 +26,23 @@ procedure InitializeStack(var Stack: TStack);
 { Процедура инициализации очереди }
 procedure InitializeQueue(var Queue: TQueue);
 
-{ Процедура очищения стека }
-procedure DestroyStack(var Stack: TStack);
-
-{ Процедура очистки очереди }
-procedure DestroyQueue(var Queue: TQueue);
+{ Процедура очищения списка }
+procedure DestroyList(var Head: TPItem);
 
 { Процедура вставки в стек }
-procedure Push(var Stack: TStack; n: Cardinal);
+procedure Push(var Stack: TStack; n: Integer);
 
 { Процедура вставки в очередь }
-procedure Enqueue(var Queue: TQueue; n: Cardinal);
+procedure Enqueue(var Queue: TQueue; n: Integer);
 
 { Функция извлечения из стека }
-function Pop(var Stack: TStack): Cardinal;
+function Pop(var Stack: TStack): Integer;
 
 { Функция извлечения из очереди }
-function Dequeue(var Queue: TQueue): Cardinal;
+function Dequeue(var Queue: TQueue): Integer;
 
 { Функция проверки списка на пустоту }
-function isEmpty(const Head: TPList): Boolean;
+function isEmpty(const Head: TPItem): Boolean;
 
 implementation
 
@@ -60,86 +57,71 @@ begin
   Queue.Tail := nil;
 end;
 
-procedure DestroyStack;
+procedure DestroyList;
 var
-  t: TPList;
+  Item: TPItem;
 begin
   // Цикл А1. Освобождение списка
-  while Stack <> nil do
+  while Head <> nil do
   begin
-    t := Stack;
-    Stack := Stack.Next;
-    Dispose(t);
+    Item := Head;
+    Head := Head.Next;
+    Dispose(Item);
   end; // Конец А1
-  Stack := nil;
-end;
-
-procedure DestroyQueue;
-var
-  t: TPList;
-begin
-  // Цикл А1. Освобождение списка
-  while Queue.Head <> nil do
-  begin
-    t := Queue.Head;
-    Queue.Head := Queue.Head.Next;
-    Dispose(t);
-  end; // Конец А1
-  Queue.Head := nil;
-  Queue.Tail := nil;
+  Head := nil;
 end;
 
 procedure Push;
 var
-  t: TPList; // Вставляемое звено списка
+  Item: TPItem; // Вставляемое звено списка
 begin
 
   // Инициализация нового элемента
-  New(t);
-  t.Elem := n;
-  t.Next := nil;
+  New(Item);
+  Item.Number := n;
+  Item.Next := nil;
 
   // Перемещение вершины стека
   if not isEmpty(Stack) then
-    t.Next := Stack;
-  Stack := t;
+    Item.Next := Stack;
+  Stack := Item;
 
 end;
 
 procedure Enqueue;
 var
-  t: TPList; // Вставляемое звено списка
+  Item: TPItem; // Вставляемое звено списка
 begin
 
   // Инициализация нового элемента
-  New(t);
-  t.Elem := n;
-  t.Next := nil;
+  New(Item);
+  Item.Number := n;
+  Item.Next := nil;
 
   // Сохранение нового элемента
   if not isEmpty(Queue.Head) then
-    Queue.Tail.Next := t
+    Queue.Tail.Next := Item
   else
-    Queue.Head := t;
+    Queue.Head := Item;
 
   // Перемещение хвоста
-  Queue.Tail := t;
+  Queue.Tail := Item;
 end;
 
 function Pop;
 var
-  t: TPList; // Извлекаемое звено списка
+  Item: TPItem; // Извлекаемое звено списка
 begin
 
   if not isEmpty(Stack) then
   begin
     // Перемещение вершины стека
-    t := Stack;
+    Item := Stack;
     Stack := Stack.Next;
 
     // Извлечение элемента с очисткой указателя
-    Result := t.Elem;
-    Dispose(t);
+    Result := Item.Number;
+    Dispose(Item);
   end
   else
     Result := 0; // Ошибка при извлечении
@@ -148,7 +130,7 @@ end;
 
 function Dequeue;
 var
-  t: TPList; // Извлекаемое звено списка
+  Item: TPItem; // Извлекаемое звено списка
 begin
   if not isEmpty(Queue.Head) then
   begin
@@ -156,13 +138,13 @@ begin
     // Перемещение начала очереди
     with Queue do
     begin
-      t := Head;
+      Item := Head;
       Head := Head.Next;
     end;
 
     // Извлечение элемента с очисткой указателя
-    Result := t.Elem;
-    Dispose(t);
+    Result := Item.Number;
+    Dispose(Item);
   end
   else
     Result := 0; // Ошибка при извлечении

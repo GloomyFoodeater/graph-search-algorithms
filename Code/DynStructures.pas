@@ -108,7 +108,7 @@ begin
   Queue.Tail := Item;
 end;
 
-function Pop;
+function Pop(var Stack: TStack): Integer;
 var
   Item: TPItem; // Извлекаемое звено списка
 begin

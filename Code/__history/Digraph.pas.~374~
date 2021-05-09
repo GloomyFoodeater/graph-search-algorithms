@@ -9,23 +9,34 @@ const
 
 type
 
+  TDesign = (clPassive, clActive, clVisited);
+
   // Тип списка смежности
-  TAdjList = TPNode;
+
+  TPAdjVertice = TPItem;
+  // TODO: Выделить смежную вершину отдельным типом
+  { TPAdjVertice = ^TAdjVertice;
+
+    TAdjVertice = record
+    Number: Integer;
+    Next: TPAdjVertice;
+    end; }
 
   // Тип вершины графа
-  TPVerticeNode = ^TVerticeNode;
+  TPVertice = ^TVertice;
 
-  TVerticeNode = record
+  TVertice = record
     Center: TPoint;
     Number: Integer;
-    Head: TAdjList;
-    Next: TPVerticeNode;
+    Head: TPAdjVertice;
+    Next: TPVertice;
     Deg: Integer;
+    Design: TDesign;
   end;
 
   // Тип ориентированный граф
   TGraph = record
-    Head: TPVerticeNode;
+    Head: TPVertice;
     Order: Integer;
   end;
 
@@ -33,11 +44,11 @@ type
   TWeights = array of array of Integer;
 
   { Процедура получения вершины по номеру }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVerticeNode);
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
 
 { Процедура нахождения вершины и её координаты по точке на холсте }
 procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+  out Vertice: TPVertice);
 
 { Функция получения центра вершины }
 function GetCenter(const G: TGraph; v: Integer): TPoint;
@@ -46,16 +57,16 @@ function GetCenter(const G: TGraph; v: Integer): TPoint;
 function Distance(const p1, p2: TPoint): Integer;
 
 { Процедура добавления вершины в граф }
-procedure AddNode(var G: TGraph; const C: TPoint);
+procedure AddVertice(var G: TGraph; const C: TPoint);
 
 { Процедура добавления дуги в граф }
-procedure AddLink(var G: TGraph; v, u: Integer);
+procedure AddArc(var G: TGraph; v, u: Integer);
 
 { Процедура удаления вершины из графа }
-procedure DeleteNode(var G: TGraph; v: Integer);
+procedure DeleteVertice(var G: TGraph; v: Integer);
 
 { Процедура удаления дуги из графа }
-procedure DeleteLink(var G: TGraph; v, u: Integer);
+procedure DeleteArc(var G: TGraph; v, u: Integer);
 
 { Процедура инициализации графа }
 procedure InitializeGraph(var G: TGraph);
@@ -74,7 +85,7 @@ begin
 end;
 
 { Функция нахождения вершины по номеру в списке }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVerticeNode);
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
 begin
   Vertice := G.Head;
 
@@ -87,46 +98,34 @@ begin
 end;
 
 procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+  out Vertice: TPVertice);
 var
-  Vertice, Found: TPVerticeNode;
   isFound: Boolean;
 begin
   Vertice := G.Head;
-  isFound := False;
-  Found := nil;
+  isFound := Distance(Vertice.Center, P) <= R;
 
   // Цикл А1. Поиск последней вершины с близкими координатами
-  while Vertice <> nil do
+  while not isFound and (Vertice <> nil) do
   begin
-    isFound := Distance(Vertice.Center, P) <= R;
-    if isFound then
-      Found := Vertice;
     Vertice := Vertice.Next;
+    isFound := Distance(Vertice.Center, P) <= R;
   end; // Конец А1
 
-  // Возврат найденной вершины
-  if Found <> nil then
-  begin
-    v := Found.Number;
-    P := Found.Center;
-  end
-  else
-    v := 0; // Вершина не была найдена
 end;
 
 function GetCenter(const G: TGraph; v: Integer): TPoint;
 var
-  Vertice: TPVerticeNode;
+  Vertice: TPVertice;
 begin
   GetByNumber(G, v, Vertice);
   if Vertice <> nil then
     Result := Vertice.Center;
 end;
 
-procedure AddNode(var G: TGraph; const C: TPoint);
+procedure AddVertice(var G: TGraph; const C: TPoint);
 var
-  Vertice: TPVerticeNode;
+  Vertice: TPVertice;
 begin
   Inc(G.Order);
 
@@ -139,6 +138,7 @@ begin
     Head := nil;
     Next := G.Head;
     Deg := 0;
+    Design := clPassive;
   end;
 
   // Запись новой вершины
@@ -146,10 +146,10 @@ begin
 
 end;
 
-procedure AddLink(var G: TGraph; v, u: Integer);
+procedure AddArc(var G: TGraph; v, u: Integer);
 var
-  Vertice: TPVerticeNode;
-  PrevArc, Arc: TPNode;
+  Vertice: TPVertice;
+  PrevArc, Arc: TPAdjVertice;
   isFound: Boolean;
 begin
 
@@ -162,10 +162,10 @@ begin
 
 end;
 
-procedure DeleteNode(var G: TGraph; v: Integer);
+procedure DeleteVertice(var G: TGraph; v: Integer);
 var
-  PrevVertice, Vertice: TPVerticeNode;
-  PrevArc, Arc: TAdjList;
+  PrevVertice, Vertice: TPVertice;
+  PrevArc, Arc: TPAdjVertice;
 begin
   Dec(G.Order);
   if v = G.Head.Number then
@@ -211,10 +211,10 @@ begin
   end;
 end;
 
-procedure DeleteLink(var G: TGraph; v, u: Integer);
+procedure DeleteArc(var G: TGraph; v, u: Integer);
 var
-  Vertice: TPVerticeNode;
-  Arc, PrevArc: TPNode;
+  Vertice: TPVertice;
+  Arc, PrevArc: TPAdjVertice;
   isFound: Boolean;
 begin
 
@@ -266,7 +266,7 @@ end;
 
 procedure DestroyGraph(var G: TGraph);
 var
-  Vertice: TPVerticeNode;
+  Vertice: TPVertice;
 begin
 
   // Цикл А1. Освобождение списка вершин
@@ -285,8 +285,8 @@ end;
 procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 var
   v, u: Integer;
-  Vertice: TPVerticeNode;
-  Arc: TPNode;
+  Vertice: TPVertice;
+  Arc: TPAdjVertice;
 begin
 
   // Инициализация матрицы

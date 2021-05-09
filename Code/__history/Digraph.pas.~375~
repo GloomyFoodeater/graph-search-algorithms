@@ -9,9 +9,11 @@ const
 
 type
 
+  TDesign = (dgPassive, dgActive, dgVisited);
+
   // Тип списка смежности
 
-  TPAdjVertice = TPNode;
+  TPAdjVertice = TPItem;
   // TODO: Выделить смежную вершину отдельным типом
   { TPAdjVertice = ^TAdjVertice;
 
@@ -29,6 +31,7 @@ type
     Head: TPAdjVertice;
     Next: TPVertice;
     Deg: Integer;
+    Design: TDesign;
   end;
 
   // Тип ориентированный граф
@@ -45,7 +48,7 @@ procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
 
 { Процедура нахождения вершины и её координаты по точке на холсте }
 procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+  out Vertice: TPVertice);
 
 { Функция получения центра вершины }
 function GetCenter(const G: TGraph; v: Integer): TPoint;
@@ -95,32 +98,20 @@ begin
 end;
 
 procedure Centralize(const G: TGraph; var P: TPoint; R: Integer;
-  out v: Integer);
+  out Vertice: TPVertice);
 var
-  Vertice, Found: TPVertice;
   isFound: Boolean;
 begin
   Vertice := G.Head;
-  isFound := False;
-  Found := nil;
+  isFound := Distance(Vertice.Center, P) <= R;
 
   // Цикл А1. Поиск последней вершины с близкими координатами
-  while Vertice <> nil do
+  while not isFound and (Vertice <> nil) do
   begin
-    isFound := Distance(Vertice.Center, P) <= R;
-    if isFound then
-      Found := Vertice;
     Vertice := Vertice.Next;
+    isFound := Distance(Vertice.Center, P) <= R;
   end; // Конец А1
 
-  // Возврат найденной вершины
-  if Found <> nil then
-  begin
-    v := Found.Number;
-    P := Found.Center;
-  end
-  else
-    v := 0; // Вершина не была найдена
 end;
 
 function GetCenter(const G: TGraph; v: Integer): TPoint;
@@ -147,6 +138,7 @@ begin
     Head := nil;
     Next := G.Head;
     Deg := 0;
+    Design := dgPassive;
   end;
 
   // Запись новой вершины

@@ -56,7 +56,6 @@ var
   G: TGraph;
   StartVertice: TPVertice = nil;
   StartVerticeCenter: TPoint;
-  isToRedraw: Boolean = True;
 
 const
   R = 40;
@@ -172,7 +171,10 @@ begin
   begin
     GetArcPoints(Src.Center, Dest.Center, Points);
     if (Src.Design = dgVisited) and (Dest.Design = dgVisited) then
+    begin
       Form1.Canvas.Pen.Color := clTeal;
+      Form1.Canvas.Brush.Color := clLime;
+    end;
 
     Form1.Canvas.Polyline(Points);
     DrawVertice(Src);
