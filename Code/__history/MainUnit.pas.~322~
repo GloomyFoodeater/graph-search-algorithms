@@ -221,7 +221,7 @@ begin
   Close;
 end;
 
-// Метод открытия графа из файла
+// Метод открытия графа
 procedure TfrmGraphEditor.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
@@ -296,7 +296,6 @@ begin
   RedrawGraph(imGraphCanvas, R, G, true);
 end;
 
-// Метод сохранения графа в файл
 procedure TfrmGraphEditor.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
@@ -304,36 +303,30 @@ var
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
 begin
-
-  // Перерисовка графа
   isToRedraw := isToRedraw or (StartVertice <> nil);
   if isToRedraw then
   begin
     RedrawGraph(imGraphCanvas, R, G, true);
     isToRedraw := false;
   end;
-
-  // Инициализация файлов
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
+
   Rewrite(fVertices);
   Rewrite(fArcs);
 
-  // Цикл А1. Проход по вершинам
   Vertice := G.Head;
   while Vertice <> nil do
   begin
     Write(fVertices, Vertice^);
-
-    // Цикл А2. Проход по соседям
     AdjVertice := Vertice.Head;
     while AdjVertice <> nil do
     begin
       Write(fArcs, AdjVertice^);
       AdjVertice := AdjVertice.Next;
-    end; // Конец А1
+    end;
     Vertice := Vertice.Next;
-  end; // Конец А2
+  end;
 end;
 
 end.

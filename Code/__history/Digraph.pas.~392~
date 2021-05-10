@@ -165,26 +165,19 @@ begin
     PrevVertice.Next := Vertice.Next;
   end;
 
-  // Освобождение памяти
   DestroyList(Vertice.Head);
   Dispose(Vertice);
 
-  // Цикл А1. Проход по вершинам графа
   Vertice := G.Head;
   while Vertice <> nil do
   begin
-
-    // Уменьшение номеров вершин
     if Vertice.Number > v then
       Dec(Vertice.Number);
 
-    // Цикл А2. Проход по соседям вершины
     PrevArc := nil;
     Arc := Vertice.Head;
     while Arc <> nil do
     begin
-
-      // Удаление соседа текущей вершины
       if Arc.Number = v then
       begin
         if PrevArc = nil then
@@ -194,13 +187,13 @@ begin
         Dispose(Arc);
       end
       else if Arc.Number > v then
-        Dec(Arc.Number); // Уменьшение номера соседа
+        Dec(Arc.Number);
 
       PrevArc := Arc;
       Arc := Arc.Next;
-    end; // Конец А2
+    end;
     Vertice := Vertice.Next;
-  end; // Конец А1
+  end;
 end;
 
 procedure DeleteArc(var G: TGraph; v, u: Integer);
@@ -244,7 +237,7 @@ begin
   end;
 
   // Удаление соседа
-  if Arc <> nil then
+  if not(Arc = nil) then
   begin
     Dispose(Arc);
   end;
@@ -284,25 +277,29 @@ begin
 
   // Инициализация матрицы
   SetLength(Matrix, G.Order, G.Order);
+
   for v := 1 to G.Order do
+  begin
     for u := 1 to G.Order do
       Matrix[v - 1, u - 1] := INFINITY;
+  end;
 
   // Цикл А2. Проход по вершинам
   Vertice := G.Head;
   while Vertice <> nil do
   begin
 
-    // Цикл A3. Проход по соседям вершины
+    // Цикл B2. Сохранение весов существующих рёбер
     Arc := Vertice.Head;
     while Arc <> nil do
     begin
       Matrix[Vertice.Number - 1, Arc.Number - 1] := 1;
       Arc := Arc.Next;
-    end; // Конец A3
+    end; // Конец B2
 
+    // Переход к следующей вершине
     Vertice := Vertice.Next;
-  end; // Конец A2
+  end; // Конец А1
 end;
 
 function AreAdjacent(const G: TGraph; v, u: Integer): Boolean;

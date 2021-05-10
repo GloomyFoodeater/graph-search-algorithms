@@ -221,7 +221,7 @@ begin
   Close;
 end;
 
-// Метод открытия графа из файла
+// Метод открытия графа
 procedure TfrmGraphEditor.OpenGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
@@ -264,30 +264,33 @@ begin
 
     end; // Конец else
 
-    // Цикл А2.Чтение соседей из файла рёбер
-    u := 1;
-    while (Vertice.Deg <> 0) and (u < Vertice.Deg) do
+    if Vertice.Deg <> 0 then
     begin
-      if u = 1 then
+
+      // Цикл А2.Чтение соседей из файла рёбер
+      for u := 1 to Vertice.Deg do
       begin
+        if u = 1 then
+        begin
 
-        // Чтение соседа в голове списка
-        New(AdjVertice);
-        Read(fArcs, AdjVertice^);
-        Vertice.Head := AdjVertice;
+          // Чтение соседа в голове списка
+          New(AdjVertice);
+          Read(fArcs, AdjVertice^);
+          Vertice.Head := AdjVertice;
 
-      end // Конец if
-      else
-      begin
+        end // Конец if
+        else
+        begin
 
-        // Чтение не головного соседа
-        New(AdjVertice.Next);
-        AdjVertice := AdjVertice.Next;
-        Read(fArcs, AdjVertice^);
+          // Чтение не головного соседа
+          New(AdjVertice.Next);
+          AdjVertice := AdjVertice.Next;
+          Read(fArcs, AdjVertice^);
 
-      end; // Конец else
-      Inc(u);
-    end; // Конец A2
+        end; // Конец else
+
+      end; // Конец A2
+    end; // Конец if
 
     Inc(v);
   end; // Конец А1
@@ -296,7 +299,6 @@ begin
   RedrawGraph(imGraphCanvas, R, G, true);
 end;
 
-// Метод сохранения графа в файл
 procedure TfrmGraphEditor.SaveGraph(Sender: TObject);
 var
   fVertices: File of TVertice;
@@ -304,36 +306,30 @@ var
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
 begin
-
-  // Перерисовка графа
   isToRedraw := isToRedraw or (StartVertice <> nil);
   if isToRedraw then
   begin
     RedrawGraph(imGraphCanvas, R, G, true);
     isToRedraw := false;
   end;
-
-  // Инициализация файлов
   System.Assign(fVertices, 'Graph.ver');
   System.Assign(fArcs, 'Graph.arc');
+
   Rewrite(fVertices);
   Rewrite(fArcs);
 
-  // Цикл А1. Проход по вершинам
   Vertice := G.Head;
   while Vertice <> nil do
   begin
     Write(fVertices, Vertice^);
-
-    // Цикл А2. Проход по соседям
     AdjVertice := Vertice.Head;
     while AdjVertice <> nil do
     begin
       Write(fArcs, AdjVertice^);
       AdjVertice := AdjVertice.Next;
-    end; // Конец А1
+    end;
     Vertice := Vertice.Next;
-  end; // Конец А2
+  end;
 end;
 
 end.

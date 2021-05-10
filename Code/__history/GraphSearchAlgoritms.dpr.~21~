@@ -2,7 +2,7 @@ program GraphSearchAlgoritms;
 
 uses
   Forms,
-  MainUnit in 'MainUnit.pas' {frmGraphEditor} ,
+  MainUnit in 'MainUnit.pas' {frmGraphEditor},
   Digraph in 'Digraph.pas',
   DynStructures in 'DynStructures.pas',
   GraphSearch in 'GraphSearch.pas',
@@ -13,6 +13,7 @@ uses
 begin
   Application.Initialize;
   Application.CreateForm(TfrmGraphEditor, frmGraphEditor);
+  State := stNone;
   Application.Run;
 
 end.
