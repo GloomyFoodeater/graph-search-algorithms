@@ -10,7 +10,7 @@ const
 type
 
   // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  TDesign = (dgPassive, dgActive, dgVisited, dgEndPoint);
 
   // Тип списка смежности
   TPAdjVertice = TPItem;
@@ -30,6 +30,7 @@ type
   // Тип ориентированный граф
   TGraph = record
     Head: TPVertice;
+    Tail: TPVertice;
     Order: Integer;
   end;
 
@@ -102,7 +103,6 @@ begin
 
   if not isFound then
     Vertice := nil;
-
 end;
 
 procedure AddVertice(var G: TGraph; const C: TPoint);
@@ -118,36 +118,35 @@ begin
     Center := C;
     Number := G.Order;
     Head := nil;
-    Next := G.Head;
+    Next := nil;
     Deg := 0;
     Design := dgPassive;
   end;
 
   // Запись новой вершины
-  G.Head := Vertice;
+  if G.Head = nil then
+    G.Head := Vertice
+  else
+    G.Tail.Next := Vertice;
+  G.Tail := Vertice;
 
 end;
 
 procedure AddArc(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
-  PrevArc, Arc: TPAdjVertice;
-  isFound: Boolean;
 begin
-
-  // Получение вершины
   GetByNumber(G, v, Vertice);
   Inc(Vertice.Deg);
 
   // Сохранение соседа в список смежности
   Push(Vertice.Head, u);
-
 end;
 
 procedure DeleteVertice(var G: TGraph; v: Integer);
 var
   PrevVertice, Vertice: TPVertice;
-  PrevArc, Arc: TPAdjVertice;
+  PrevAdjVertice, AdjVertice: TPAdjVertice;
 begin
   Dec(G.Order);
 
@@ -160,7 +159,7 @@ begin
   else
   begin
     // Удаление не головной вершины
-    GetByNumber(G, v + 1, PrevVertice);
+    GetByNumber(G, v - 1, PrevVertice);
     Vertice := PrevVertice.Next;
     PrevVertice.Next := Vertice.Next;
   end;
@@ -178,26 +177,30 @@ begin
     if Vertice.Number > v then
       Dec(Vertice.Number);
 
+    // Изменение хвоста списка
+    if Vertice.Next = nil then
+      G.Tail := Vertice;
+
     // Цикл А2. Проход по соседям вершины
-    PrevArc := nil;
-    Arc := Vertice.Head;
-    while Arc <> nil do
+    PrevAdjVertice := nil;
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
 
       // Удаление соседа текущей вершины
-      if Arc.Number = v then
+      if AdjVertice.Number = v then
       begin
-        if PrevArc = nil then
-          Vertice.Head := Arc.Next
+        if PrevAdjVertice = nil then
+          Vertice.Head := AdjVertice.Next
         else
-          PrevArc.Next := Arc.Next;
-        Dispose(Arc);
+          PrevAdjVertice.Next := AdjVertice.Next;
+        Dispose(AdjVertice);
       end
-      else if Arc.Number > v then
-        Dec(Arc.Number); // Уменьшение номера соседа
+      else if AdjVertice.Number > v then
+        Dec(AdjVertice.Number); // Уменьшение номера соседа
 
-      PrevArc := Arc;
-      Arc := Arc.Next;
+      PrevAdjVertice := AdjVertice;
+      AdjVertice := AdjVertice.Next;
     end; // Конец А2
     Vertice := Vertice.Next;
   end; // Конец А1
@@ -206,7 +209,7 @@ end;
 procedure DeleteArc(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
-  Arc, PrevArc: TPAdjVertice;
+  AdjVertice, PrevAdjVertice: TPAdjVertice;
   isFound: Boolean;
 begin
 
@@ -216,37 +219,37 @@ begin
   Dec(Vertice.Deg);
 
   // Получение первого соседа
-  PrevArc := Vertice.Head;
-  Arc := nil;
+  PrevAdjVertice := Vertice.Head;
+  AdjVertice := nil;
 
   // Поиск звена перед звеном с искомым соседом
-  if (PrevArc = nil) or (PrevArc.Number = u) then
+  if (PrevAdjVertice = nil) or (PrevAdjVertice.Number = u) then
   begin
-    if PrevArc <> nil then
-      Vertice.Head := PrevArc.Next
+    if PrevAdjVertice <> nil then
+      Vertice.Head := PrevAdjVertice.Next
     else
       Vertice.Head := nil;
   end
   else
   begin
 
-    isFound := (PrevArc.Next.Number = u) or (PrevArc = nil);
+    isFound := (PrevAdjVertice.Next.Number = u) or (PrevAdjVertice = nil);
 
     // Получение предыдущего соседа удаляемого
     while not isFound do
     begin
-      PrevArc := PrevArc.Next;
-      isFound := (PrevArc = nil) or (PrevArc.Next.Number = u);
+      PrevAdjVertice := PrevAdjVertice.Next;
+      isFound := (PrevAdjVertice = nil) or (PrevAdjVertice.Next.Number = u);
     end;
 
-    Arc := PrevArc.Next;
-    PrevArc.Next := Arc.Next;
+    AdjVertice := PrevAdjVertice.Next;
+    PrevAdjVertice.Next := AdjVertice.Next;
   end;
 
   // Удаление соседа
-  if Arc <> nil then
+  if AdjVertice <> nil then
   begin
-    Dispose(Arc);
+    Dispose(AdjVertice);
   end;
 
 end;
@@ -254,6 +257,7 @@ end;
 procedure InitializeGraph(var G: TGraph);
 begin
   G.Head := nil;
+  G.Tail := nil;
   G.Order := 0;
 end;
 
@@ -279,7 +283,7 @@ procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 var
   v, u: Integer;
   Vertice: TPVertice;
-  Arc: TPAdjVertice;
+  AdjVertice: TPAdjVertice;
 begin
 
   // Инициализация матрицы
@@ -294,11 +298,11 @@ begin
   begin
 
     // Цикл A3. Проход по соседям вершины
-    Arc := Vertice.Head;
-    while Arc <> nil do
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
-      Matrix[Vertice.Number - 1, Arc.Number - 1] := 1;
-      Arc := Arc.Next;
+      Matrix[Vertice.Number - 1, AdjVertice.Number - 1] := 1;
+      AdjVertice := AdjVertice.Next;
     end; // Конец A3
 
     Vertice := Vertice.Next;

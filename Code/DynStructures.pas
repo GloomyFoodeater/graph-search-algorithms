@@ -46,18 +46,18 @@ function isEmpty(const Head: TPItem): Boolean;
 
 implementation
 
-procedure InitializeStack;
+procedure InitializeStack(var Stack: TStack);
 begin
   Stack := nil;
 end;
 
-procedure InitializeQueue;
+procedure InitializeQueue(var Queue: TQueue);
 begin
   Queue.Head := nil;
   Queue.Tail := nil;
 end;
 
-procedure DestroyList;
+procedure DestroyList(var Head: TPItem);
 var
   Item: TPItem;
 begin

@@ -4,14 +4,8 @@ interface
 
 uses Digraph, System.Types, Math, VCL.ExtCtrls, VCL.Graphics;
 
-{ Процедура рисования вершины графа }
-procedure DrawVertice(const Img: TImage; R: Integer; const Vertice: TPVertice);
-
-{ Процедура рисования ребра графа }
-procedure DrawArc(const Img: TImage; R: Integer; const Src, Dest: TPVertice);
-
 procedure RedrawGraph(const Img: TImage; R: Integer; const G: TGraph;
-  arePassive: Boolean);
+  wasPainted: Boolean = false);
 
 implementation
 
@@ -99,6 +93,11 @@ begin
           Pen.Color := clTeal;
           Brush.Color := clLime;
         end;
+      dgEndPoint:
+        begin
+          Pen.Color := clRed;
+          Brush.Color := clGreen;
+        end;
     end;
 
     // Вывод круга
@@ -124,17 +123,12 @@ begin
   if d > R then
   begin
     GetArcPoints(Src.Center, Dest.Center, R, Points);
-    if (Src.Design = dgVisited) and (Dest.Design = dgVisited) then
-      Img.Canvas.Pen.Color := clTeal;
-
     Img.Canvas.Polyline(Points);
-    DrawVertice(Img, R, Src);
-    DrawVertice(Img, R, Dest);
   end;
 end;
 
 procedure RedrawGraph(const Img: TImage; R: Integer; const G: TGraph;
-  arePassive: Boolean);
+  wasPainted: Boolean = false);
 var
   Vertice, AdjVertice: TPVertice;
   Arc: TPAdjVertice;
@@ -150,12 +144,12 @@ begin
   while Vertice <> nil do
   begin
     Arc := Vertice.Head;
-    if arePassive then
+    if wasPainted then
       Vertice.Design := dgPassive;
     while Arc <> nil do
     begin
       GetByNumber(G, Arc.Number, AdjVertice);
-      if arePassive then
+      if wasPainted then
         AdjVertice.Design := dgPassive;
       DrawArc(Img, R, Vertice, AdjVertice);
       Arc := Arc.Next;

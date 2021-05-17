@@ -5,9 +5,16 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
-  DynStructures, GraphDrawing;
+  DynStructures, GraphDrawing, AboutForm;
 
 type
+
+  // Тип режима работы с графом
+  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stDFS,
+    stBFS, stDijkstra, stNone);
+  TVerFile = File of TVertice;
+  TArcFile = File of TItem;
+
   TfrmGraphEditor = class(TForm)
     plFunctionsContainer: TPanel;
     AddNodeBtn: TSpeedButton;
@@ -22,46 +29,59 @@ type
     nFile: TMenuItem;
     nEdit: TMenuItem;
     nHelp: TMenuItem;
-    nOpen: TMenuItem;
     nSave: TMenuItem;
     nExit: TMenuItem;
     nClear: TMenuItem;
     nAbout: TMenuItem;
     N1: TMenuItem;
+    nOpen: TMenuItem;
+    nSaveAs: TMenuItem;
+    sdVerticeSaver: TSaveDialog;
+    sdArcsSaver: TSaveDialog;
+    odVerticeOpener: TOpenDialog;
+    odArcsOpener: TOpenDialog;
     procedure frmGraphEditorCreate(Sender: TObject);
     procedure frmGraphEditorClose(Sender: TObject; var Action: TCloseAction);
     procedure SetClickState(Sender: TObject);
     procedure imGraphCanvasClick(Sender: TObject);
-    procedure SaveGraph(Sender: TObject);
-    procedure OpenGraph(Sender: TObject);
     procedure nExitClick(Sender: TObject);
-  end;
+    procedure nClearClick(Sender: TObject);
+    procedure nOpenClick(Sender: TObject);
+    procedure nSaveClick(Sender: TObject);
+    procedure nSaveAsClick(Sender: TObject);
+    procedure nAboutClick(Sender: TObject);
+  private
+    State: TClickState; // Переменная состояния для работы с графом
+    G: TGraph; // Граф для редактирования
+    StartVertice: TPVertice; // Указатель на запомненную вершину
+    wasPainted: Boolean; // Флаг о том, что необходимо перерисовать граф
+    VerticesFileName, ArcsFileName: String; // Последние имена файлов
 
-  // Тип режима работы с графом
-  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stDFS,
-    stBFS, stDijkstra, stNone);
+    function StartSearch(const G: TGraph; State: TClickState;
+      v, u: Integer): Boolean;
+    function OpenGraph(var fVertices: TVerFile; var fArcs: TArcFile): Boolean;
+    procedure SaveGraph(var fVertices: TVerFile; var fArcs: TArcFile);
+
+  const
+    R = 40; // Радиус вершины графа
+
+  end;
 
 var
   frmGraphEditor: TfrmGraphEditor;
-  State: TClickState; // Переменная состояния для работы с графом
-  G: TGraph; // Граф для редактирования
-  StartVertice: TPVertice = nil; // Указатель на запомненную вершину
-  isToRedraw: Boolean = false; // Флаг о том, что необходимо перериосвать граф
-
-const
-  R = 40; // Радиус вершины графа
 
 implementation
 
 {$R *.dfm}
 
 // Вспомогательная функция для вызова процедур поиска
-function StartSearch(const G: TGraph; State: TClickState;
+function TfrmGraphEditor.StartSearch(const G: TGraph; State: TClickState;
   v, u: Integer): Boolean;
 var
   Weights: TWeights; // Матрица весов
   Path: TStack; // Пройденный путь
   Vertice: TPVertice; // Указатель на вершину
+  flag: Boolean;
 begin
   ToWeightMatrix(G, Weights); // Преобразование в матрицу расстояний
 
@@ -79,11 +99,18 @@ begin
   Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
+  flag := true;
   while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(G, v, Vertice);
-    Vertice.Design := dgVisited;
+    if flag or isEmpty(Path) then
+    begin
+      Vertice.Design := dgEndPoint;
+      flag := false;
+    end
+    else
+      Vertice.Design := dgVisited;
   end; // Конец А1
 
 end;
@@ -92,6 +119,11 @@ end;
 procedure TfrmGraphEditor.frmGraphEditorCreate(Sender: TObject);
 begin
   State := stNone; // Инициализация режима работы
+  InitializeGraph(G); // Инициализация графа
+
+  // Инициализация начальных имён файлов
+  VerticesFileName := '';
+  ArcsFileName := '';
 
   // Инициализация графических настроек
   with frmGraphEditor.imGraphCanvas.Canvas do
@@ -99,6 +131,8 @@ begin
     Pen.Width := 3;
     Font.Size := 15;
     Font.Style := [fsBold];
+    StartVertice := nil;
+    wasPainted := false;
   end;
 end;
 
@@ -115,10 +149,13 @@ var
   i: Integer; // Номер кнопки на панели
   Child: TControl; // Список контролов на панели
 begin
+
   // Перерисовка в случае необходимости
-  isToRedraw := isToRedraw or (StartVertice <> nil);
-  if isToRedraw then
+  if wasPainted or (StartVertice <> nil) then
+  begin
     RedrawGraph(imGraphCanvas, R, G, true);
+    wasPainted := false;
+  end;
 
   // Инициализация режима работы и начальной вершины
   StartVertice := nil;
@@ -142,10 +179,10 @@ var
 begin
 
   // Перерисовка графа
-  if isToRedraw then
+  if wasPainted then
   begin
-    RedrawGraph(imGraphCanvas, R, G, true);
-    isToRedraw := false;
+    RedrawGraph(imGraphCanvas, R, G, wasPainted);
+    wasPainted := false;
   end;
 
   // Перебор переменной состояния
@@ -166,9 +203,8 @@ begin
 
           // Получение начальной вершины
           Centralize(G, Pos, R, StartVertice);
-          if StartVertice = nil then
-            Exit;
-          StartVertice.Design := dgActive;
+          if StartVertice <> nil then
+            StartVertice.Design := dgActive;
 
         end // Конец if
         else
@@ -181,27 +217,23 @@ begin
           case State of
             stAddArc: // Добавление ребра
               begin
-                StartVertice.Design := dgPassive;
                 if not AreAdjacent(G, Vertice.Number, StartVertice.Number) then
-                  AddArc(G, StartVertice.Number, Vertice.Number)
-                else
+                  AddArc(G, StartVertice.Number, Vertice.Number);
+                StartVertice.Design := dgPassive;
               end;
             stDeleteArc: // Удаление ребра
               begin
-                StartVertice.Design := dgPassive;
                 if AreAdjacent(G, StartVertice.Number, Vertice.Number) then
                   DeleteArc(G, StartVertice.Number, Vertice.Number);
+                StartVertice.Design := dgPassive;
               end;
             stDFS, stBFS, stDijkstra: // Алгоритмы поиска
               begin
                 isFound := StartSearch(G, State, StartVertice.Number,
                   Vertice.Number);
                 if not isFound then
-                begin
-                  Vertice.Design := dgPassive;
                   ShowMessage('Путь не найден.');
-                end;
-                isToRedraw := true; // Флаг о необходимости перерисовки
+                wasPainted := true; // Флаг о необходимости перерисовки
               end;
           end;
           StartVertice := nil; // Сброс начальной вершины после обработки обеих
@@ -212,7 +244,152 @@ begin
 
   // Перерисовка графа
   if State <> stNone then
-    RedrawGraph(imGraphCanvas, R, G, false);
+    RedrawGraph(imGraphCanvas, R, G);
+end;
+
+procedure TfrmGraphEditor.nOpenClick(Sender: TObject);
+var
+  fVertices: TVerFile;
+  fArcs: TArcFile;
+  isSuccess: Boolean;
+begin
+  odVerticeOpener.FileName := '';
+  odArcsOpener.FileName := '';
+
+  // Выбор файла с вершинами
+  if odVerticeOpener.Execute then
+  begin
+
+    // Проверка корректности расширения
+    if ExtractFileExt(odVerticeOpener.FileName) <> '.ver' then
+    begin
+      ShowMessage('Выбран файл с неверным расширением.');
+      Exit;
+    end;
+
+    // Выбор файла с дугами
+    if odArcsOpener.Execute then
+    begin
+
+      // Проверка корректности расширения
+      if ExtractFileExt(odArcsOpener.FileName) <> '.arc' then
+      begin
+        ShowMessage('Выбран файл с неверным расширением.');
+        Exit;
+      end;
+
+      // Инициализация графа
+      DestroyGraph(G);
+      InitializeGraph(G);
+
+      // Подготовка файлов
+      System.Assign(fVertices, odVerticeOpener.FileName);
+      System.Assign(fArcs, odArcsOpener.FileName);
+      Reset(fVertices);
+      Reset(fArcs);
+
+      // Чтение графа
+
+      isSuccess := OpenGraph(fVertices, fArcs);
+      // Обработка ошибки
+      if not isSuccess then
+      begin
+        DestroyGraph(G);
+        InitializeGraph(G);
+        ShowMessage('Данные файлов некорректны.');
+      end
+      else
+      begin
+        VerticesFileName := odVerticeOpener.FileName;
+        ArcsFileName := odArcsOpener.FileName;
+      end;
+
+      // Закрытие файлов
+      CloseFile(fVertices);
+      CloseFile(fArcs);
+
+      // Перерисовка графа
+      RedrawGraph(imGraphCanvas, R, G);
+    end;
+
+  end;
+
+end;
+
+procedure TfrmGraphEditor.nSaveAsClick(Sender: TObject);
+begin
+
+  sdVerticeSaver.FileName := '';
+  sdArcsSaver.FileName := '';
+
+  // Выбор файла с вершинами
+  if not sdVerticeSaver.Execute then
+    Exit;
+
+  // Проверка корректности расширения
+  if ExtractFileExt(sdVerticeSaver.FileName) <> '.ver' then
+  begin
+    ShowMessage('Выбран файл с неверным расширением.');
+    Exit;
+  end;
+
+  // Выбор файла с дугами
+  if not sdArcsSaver.Execute then
+    Exit;
+
+  // Проверка корректности расширения
+  if ExtractFileExt(sdArcsSaver.FileName) <> '.arc' then
+  begin
+    ShowMessage('Выбран файл с неверным расширением.');
+    Exit;
+  end;
+
+  // Сохранение путей к файлу и сохранение графа
+  VerticesFileName := sdVerticeSaver.FileName;
+  ArcsFileName := sdArcsSaver.FileName;
+  nSaveClick(Sender);
+
+end;
+
+procedure TfrmGraphEditor.nSaveClick(Sender: TObject);
+var
+  fVertices: TVerFile;
+  fArcs: TArcFile;
+  isSuccess: Boolean;
+begin
+
+  // Переход к "сохранению как"
+  if (VerticesFileName = '') or (ArcsFileName = '') then
+  begin
+    Self.nSaveAsClick(Sender);
+    Exit
+  end;
+
+  // Подготовка файлов
+  System.Assign(fVertices, VerticesFileName);
+  System.Assign(fArcs, ArcsFileName);
+  Rewrite(fVertices);
+  Rewrite(fArcs);
+
+  // Сохранение графа
+  SaveGraph(fVertices, fArcs);
+
+  // Закрытие файлов
+  CloseFile(fVertices);
+  CloseFile(fArcs);
+end;
+
+// Метод очистки холста
+procedure TfrmGraphEditor.nAboutClick(Sender: TObject);
+begin
+  frmAbout.Show;
+end;
+
+procedure TfrmGraphEditor.nClearClick(Sender: TObject);
+begin
+  DestroyGraph(G);
+  InitializeGraph(G);
+  RedrawGraph(imGraphCanvas, R, G);
 end;
 
 // Метод выхода из программы
@@ -222,102 +399,63 @@ begin
 end;
 
 // Метод открытия графа из файла
-procedure TfrmGraphEditor.OpenGraph(Sender: TObject);
+function TfrmGraphEditor.OpenGraph(var fVertices: TVerFile;
+  var fArcs: TArcFile): Boolean;
 var
-  fVertices: File of TVertice;
-  fArcs: File of TItem;
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
-  v, u: Integer;
+  v: Integer;
 begin
 
-  // Инициализация графа
-  DestroyGraph(G);
-  InitializeGraph(G);
-
-  // Подготовка файлов
-  System.Assign(fVertices, 'Graph.ver');
-  System.Assign(fArcs, 'Graph.arc');
-  Reset(fVertices);
-  Reset(fArcs);
-
   // Цикл А1. Проход по файлу вершин
-  v := 0;
-  while not Eof(fVertices) do
+  Result := true;
+  New(Vertice);
+  New(AdjVertice);
+  while Result and not Eof(fVertices) do
   begin
-    if v = 0 then
+
+    // Чтение очередной вершины
+    Read(fVertices, Vertice^);
+    AddVertice(G, Vertice.Center);
+
+    // Проверка корректности прочитанных вершины
+    with Vertice^ do
     begin
+      Result := Number = G.Tail.Number;
+      Result := Result and (Center.X >= 0) and (Center.Y >= 0);
+    end;
 
-      // Чтение головы списка вершин
-      New(Vertice);
-      Read(fVertices, Vertice^);
-      G.Head := Vertice;
-
-    end // Конец if
-    else
+    // Цикл А2. Частичный проход по файлу рёбер
+    v := 1;
+    while Result and (v <= Vertice.Deg) do
     begin
+      Result := not Eof(fArcs); // Проверка на недостаток соседей
 
-      // Чтение не головной вершины
-      New(Vertice.Next);
-      Vertice := Vertice.Next;
-      Read(fVertices, Vertice^);
-
-    end; // Конец else
-
-    // Цикл А2.Чтение соседей из файла рёбер
-    u := 1;
-    while (Vertice.Deg <> 0) and (u < Vertice.Deg) do
-    begin
-      if u = 1 then
+      // Чтение очередного соседа
+      if Result then
       begin
-
-        // Чтение соседа в голове списка
-        New(AdjVertice);
         Read(fArcs, AdjVertice^);
-        Vertice.Head := AdjVertice;
+        AddArc(G, Vertice.Number, AdjVertice.Number);
+        Inc(v);
+        // Переход к следующему соседу
+      end;
+    end; // Конец А2
 
-      end // Конец if
-      else
-      begin
+    Result := Result and (AdjVertice.Next = nil); // Проверка на избыток соседей
 
-        // Чтение не головного соседа
-        New(AdjVertice.Next);
-        AdjVertice := AdjVertice.Next;
-        Read(fArcs, AdjVertice^);
-
-      end; // Конец else
-      Inc(u);
-    end; // Конец A2
-
-    Inc(v);
   end; // Конец А1
 
-  G.Order := v;
-  RedrawGraph(imGraphCanvas, R, G, true);
+  Dispose(Vertice);
+  Dispose(AdjVertice);
 end;
 
 // Метод сохранения графа в файл
-procedure TfrmGraphEditor.SaveGraph(Sender: TObject);
+procedure TfrmGraphEditor.SaveGraph(var fVertices: TVerFile;
+  var fArcs: TArcFile);
 var
-  fVertices: File of TVertice;
-  fArcs: File of TItem;
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
 begin
-
-  // Перерисовка графа
-  isToRedraw := isToRedraw or (StartVertice <> nil);
-  if isToRedraw then
-  begin
-    RedrawGraph(imGraphCanvas, R, G, true);
-    isToRedraw := false;
-  end;
-
-  // Инициализация файлов
-  System.Assign(fVertices, 'Graph.ver');
-  System.Assign(fArcs, 'Graph.arc');
-  Rewrite(fVertices);
-  Rewrite(fArcs);
 
   // Цикл А1. Проход по вершинам
   Vertice := G.Head;

@@ -87,7 +87,6 @@ begin
   SetLength(isUsed, Order);
   for u := 1 to Order do
     isUsed[u - 1] := False;
-  isUsed[v - 1] := true;
 
   // Подготовка массива предков
   SetLength(Parents, Order);
@@ -99,18 +98,22 @@ begin
 
     // Получение вершины
     v := Pop(s);
-
-    // Цикл А2. Добавление в стек всех соседей вершины
-    for u := Order downto 1 do
+    if not isUsed[v - 1] then
     begin
-      if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
-      begin
-        isUsed[u - 1] := true;
-        Parents[u - 1] := v;
-        Push(s, u);
-      end; // Конец if
+      isUsed[u - 1] := true;
 
-    end; // Конец А2
+      // Цикл А2. Добавление в стек всех соседей вершины
+      for u := Order downto 1 do
+      begin
+        if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INFINITY) then
+        begin
+          Parents[u - 1] := v;
+          Push(s, u);
+        end; // Конец if
+
+      end; // Конец А2
+
+    end;
 
   end; // Конец А1
 
@@ -209,6 +212,7 @@ begin
   while not(isFound or (d = INFINITY)) do
   begin
 
+    // Цикл А2. Уменьшение меток
     for u := 1 to Order do
     begin
       if not isVisited[u - 1] and (Marks[u - 1] > d + Graph[v - 1, u - 1]) then
@@ -216,9 +220,9 @@ begin
         Parents[u - 1] := v;
         Marks[u - 1] := d + Graph[v - 1, u - 1];
       end;
-    end;
+    end; // Конец А2
 
-    // Получение следующей вершины
+    // Посещение следущей вершины
     isVisited[v - 1] := true;
     isFound := v = Dest;
     MinDist(Marks, isVisited, v, d);
