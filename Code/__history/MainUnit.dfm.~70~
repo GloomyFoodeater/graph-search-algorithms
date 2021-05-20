@@ -5,7 +5,6 @@ object fmEditor: TfmEditor
   ClientHeight = 690
   ClientWidth = 1376
   Color = clBtnHighlight
-  DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -13,22 +12,19 @@ object fmEditor: TfmEditor
   Font.Style = []
   Menu = mmMain
   OldCreateOrder = False
-  OnClose = fmEditorClose
-  OnCreate = fmEditorCreate
+  OnClose = frmGraphEditorClose
+  OnCreate = frmGraphEditorCreate
   PixelsPerInch = 96
   TextHeight = 13
-  object pbCanvas: TPaintBox
+  object imCanvas: TImage
     Left = 0
     Top = 0
     Width = 1196
     Height = 690
     Align = alClient
-    OnClick = pbCanvasClick
-    OnPaint = pbCanvasPaint
-    ExplicitLeft = 472
-    ExplicitTop = 112
-    ExplicitWidth = 105
-    ExplicitHeight = 105
+    OnClick = imCanvasClick
+    ExplicitLeft = -16
+    ExplicitTop = -152
   end
   object plFunctionsContainer: TPanel
     Left = 1196
@@ -181,21 +177,21 @@ object fmEditor: TfmEditor
       end
     end
   end
-  object sdVertices: TSaveDialog
+  object sdVerticeSaver: TSaveDialog
     DefaultExt = 'ver'
     Filter = 'Vertice file|*.ver'
     Title = #1042#1099#1073#1077#1088#1080#1090#1077' '#1092#1072#1081#1083' '#1076#1083#1103' '#1089#1086#1093#1088#1072#1085#1077#1085#1080#1103' '#1074#1077#1088#1096#1080#1085
     Left = 8
     Top = 64
   end
-  object sdArcs: TSaveDialog
+  object sdArcsSaver: TSaveDialog
     DefaultExt = 'arc'
     Filter = 'Arcs file|*.arc'
     Title = #1042#1099#1073#1077#1088#1080#1090#1077' '#1092#1072#1081#1083' '#1076#1083#1103' '#1089#1086#1093#1088#1072#1085#1077#1085#1080#1103' '#1076#1091#1075
     Left = 64
     Top = 64
   end
-  object odVertices: TOpenDialog
+  object odVerticeOpener: TOpenDialog
     DefaultExt = 'ver'
     Filter = 'Vertice file|*.ver'
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
@@ -203,7 +199,7 @@ object fmEditor: TfmEditor
     Left = 8
     Top = 120
   end
-  object odArcs: TOpenDialog
+  object odArcsOpener: TOpenDialog
     DefaultExt = 'arc'
     Filter = 'Arcs file|*.arc'
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]

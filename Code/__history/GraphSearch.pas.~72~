@@ -93,7 +93,7 @@ begin
   Parents[v - 1] := 0;
 
   // Цикл А1. Посещение вершин в стеке
-  while s <> nil do
+  while not isEmpty(s) do
   begin
 
     // Получение вершины
@@ -149,7 +149,7 @@ begin
   Parents[v - 1] := 0;
 
   // Цикл А1. Посещение всех вершин из очереди
-  while q.Head <> nil do
+  while not isEmpty(q.Head) do
   begin
 
     // Получение вершины

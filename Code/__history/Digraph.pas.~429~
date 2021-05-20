@@ -10,7 +10,7 @@ const
 type
 
   // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  TDesign = (dgPassive, dgActive, dgVisited, dgEndPoint);
 
   // Тип списка смежности
   TPAdjVertice = TPItem;
@@ -170,6 +170,7 @@ begin
   // Освобождение памяти
   DestroyList(Vertice.Head);
   Dispose(Vertice);
+  Vertice := nil;
 
   // Цикл А1. Проход по вершинам графа
   Vertice := G.Head;

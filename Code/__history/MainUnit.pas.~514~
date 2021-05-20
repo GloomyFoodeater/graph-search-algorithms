@@ -93,10 +93,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  Result := Path <> nil;
+  Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
-  while Path <> nil do
+  while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(Graph, v, Vertice);

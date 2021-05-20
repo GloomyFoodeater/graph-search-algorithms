@@ -93,10 +93,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  Result := Path <> nil;
+  Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
-  while Path <> nil do
+  while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(Graph, v, Vertice);
@@ -108,6 +108,7 @@ end;
 // Метод создания формы
 procedure TfmEditor.fmEditorCreate(Sender: TObject);
 begin
+
   State := stNone;
   InitializeGraph(Graph, 40);
   VerticesFileName := '';

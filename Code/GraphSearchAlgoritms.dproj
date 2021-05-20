@@ -135,7 +135,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="MainUnit.pas">
-            <Form>frmGraphEditor</Form>
+            <Form>fmEditor</Form>
         </DCCReference>
         <DCCReference Include="Digraph.pas"/>
         <DCCReference Include="DynStructures.pas"/>

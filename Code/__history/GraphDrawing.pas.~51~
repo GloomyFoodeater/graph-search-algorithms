@@ -133,9 +133,6 @@ begin
     Pen.Color := clWhite;
     Rectangle(0, 0, Width, Height);
     Pen.Color := clBlack;
-    Pen.Width := 3;
-    Font.Size := 15;
-    Font.Style := [fsBold];
   end;
 
   Vertice := G.Head;

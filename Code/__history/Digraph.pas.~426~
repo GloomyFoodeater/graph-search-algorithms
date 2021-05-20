@@ -10,7 +10,7 @@ const
 type
 
   // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  TDesign = (dgPassive, dgActive, dgVisited, dgEndPoint);
 
   // Тип списка смежности
   TPAdjVertice = TPItem;
@@ -216,7 +216,7 @@ var
   isFound: Boolean;
 begin
 
-  if not AreAdjacent(G, v, u) then
+  if not AreAdjacent(Graph, v, u) then
     Exit;
 
   // Получение начала дуги

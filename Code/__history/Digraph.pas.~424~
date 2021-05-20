@@ -10,7 +10,7 @@ const
 type
 
   // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  TDesign = (dgPassive, dgActive, dgVisited, dgEndPoint);
 
   // Тип списка смежности
   TPAdjVertice = TPItem;
@@ -136,14 +136,11 @@ procedure AddArc(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
 begin
-  if not AreAdjacent(G, v, u) then
-  begin
-    GetByNumber(G, v, Vertice);
-    Inc(Vertice.Deg);
+  GetByNumber(G, v, Vertice);
+  Inc(Vertice.Deg);
 
-    // Сохранение соседа в список смежности
-    Push(Vertice.Head, u);
-  end;
+  // Сохранение соседа в список смежности
+  Push(Vertice.Head, u);
 end;
 
 procedure DeleteVertice(var G: TGraph; v: Integer);
@@ -215,9 +212,6 @@ var
   AdjVertice, PrevAdjVertice: TPAdjVertice;
   isFound: Boolean;
 begin
-
-  if not AreAdjacent(G, v, u) then
-    Exit;
 
   // Получение начала дуги
   GetByNumber(G, v, Vertice);

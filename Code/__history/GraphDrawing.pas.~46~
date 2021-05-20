@@ -4,8 +4,7 @@ interface
 
 uses Digraph, System.Types, Math, VCL.ExtCtrls, VCL.Graphics;
 
-procedure RedrawGraph(const Img: TCanvas; Width, Height: Integer;
-  const G: TGraph);
+procedure RedrawGraph(const Img: TImage; const G: TGraph);
 
 implementation
 
@@ -58,7 +57,7 @@ begin
 
 end;
 
-procedure DrawVertice(const Img: TCanvas; R: Integer; const Vertice: TPVertice);
+procedure DrawVertice(const Img: TImage; R: Integer; const Vertice: TPVertice);
 var
   Caption: String;
   PosX: Integer; // Левый верхний край текста
@@ -75,7 +74,7 @@ begin
     PosX := PosX - 5;
   end;
 
-  with Img do
+  with Img.Canvas do
   begin
     case Vertice.Design of
       dgPassive:
@@ -109,7 +108,7 @@ begin
 
 end;
 
-procedure DrawArc(const Img: TCanvas; R: Integer; const Src, Dest: TPVertice);
+procedure DrawArc(const Img: TImage; R: Integer; const Src, Dest: TPVertice);
 var
   d: Integer;
   Points: Array [0 .. 6] of TPoint;
@@ -118,30 +117,28 @@ begin
   if d > R then
   begin
     GetArcPoints(Src.Center, Dest.Center, R, Points);
-    Img.Polyline(Points);
+    Img.Canvas.Polyline(Points);
   end;
 end;
 
-procedure RedrawGraph(const Img: TCanvas; Width, Height: Integer;
-  const G: TGraph);
+procedure RedrawGraph(const Img: TImage; const G: TGraph);
 var
   Vertice, AdjVertice: TPVertice;
   Arc: TPAdjVertice;
 begin
-  with Img do
+  with Img, Img.Canvas do
   begin
     Pen.Color := clWhite;
     Rectangle(0, 0, Width, Height);
     Pen.Color := clBlack;
-    Pen.Width := 3;
-    Font.Size := 15;
-    Font.Style := [fsBold];
   end;
 
   Vertice := G.Head;
   while Vertice <> nil do
   begin
     Arc := Vertice.Head;
+    if G.isPainted and (Vertice.Design = dgVisited) then
+      Vertice.Design := dgPassive;
     while Arc <> nil do
     begin
       GetByNumber(G, Arc.Number, AdjVertice);
@@ -149,8 +146,6 @@ begin
       Arc := Arc.Next;
     end;
     DrawVertice(Img, G.R, Vertice);
-    if Vertice.Design = dgVisited then
-      Vertice.Design := dgPassive;
     Vertice := Vertice.Next;
   end;
 end;

@@ -13,8 +13,8 @@ object fmEditor: TfmEditor
   Font.Style = []
   Menu = mmMain
   OldCreateOrder = False
-  OnClose = fmEditorClose
-  OnCreate = fmEditorCreate
+  OnClose = frmGraphEditorClose
+  OnCreate = frmGraphEditorCreate
   PixelsPerInch = 96
   TextHeight = 13
   object pbCanvas: TPaintBox

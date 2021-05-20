@@ -133,15 +133,14 @@ begin
     Pen.Color := clWhite;
     Rectangle(0, 0, Width, Height);
     Pen.Color := clBlack;
-    Pen.Width := 3;
-    Font.Size := 15;
-    Font.Style := [fsBold];
   end;
 
   Vertice := G.Head;
   while Vertice <> nil do
   begin
     Arc := Vertice.Head;
+    if G.isPainted then
+      Vertice.Design := dgPassive;
     while Arc <> nil do
     begin
       GetByNumber(G, Arc.Number, AdjVertice);
@@ -149,8 +148,6 @@ begin
       Arc := Arc.Next;
     end;
     DrawVertice(Img, G.R, Vertice);
-    if Vertice.Design = dgVisited then
-      Vertice.Design := dgPassive;
     Vertice := Vertice.Next;
   end;
 end;

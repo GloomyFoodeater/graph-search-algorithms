@@ -42,8 +42,8 @@ type
     Label1: TLabel;
     Label2: TLabel;
     pbCanvas: TPaintBox;
-    procedure fmEditorCreate(Sender: TObject);
-    procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
+    procedure frmGraphEditorCreate(Sender: TObject);
+    procedure frmGraphEditorClose(Sender: TObject; var Action: TCloseAction);
     procedure SetClickState(Sender: TObject);
     procedure pbCanvasClick(Sender: TObject);
     procedure nExitClick(Sender: TObject);
@@ -93,10 +93,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  Result := Path <> nil;
+  Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
-  while Path <> nil do
+  while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(Graph, v, Vertice);
@@ -106,17 +106,29 @@ begin
 end;
 
 // Метод создания формы
-procedure TfmEditor.fmEditorCreate(Sender: TObject);
+procedure TfmEditor.frmGraphEditorCreate(Sender: TObject);
 begin
-  State := stNone;
-  InitializeGraph(Graph, 40);
+
+  State := stNone; // Инициализация режима работы
+  InitializeGraph(Graph, 40); // Инициализация графа
+
+  // Инициализация начальных имён файлов
   VerticesFileName := '';
   ArcsFileName := '';
-  VStart := nil;
+
+  // Инициализация графических настроек
+  with pbCanvas.Canvas do
+  begin
+    Pen.Width := 3;
+    Font.Size := 15;
+    Font.Style := [fsBold];
+    VStart := nil;
+  end;
 end;
 
 // Метод закрытия формы
-procedure TfmEditor.fmEditorClose(Sender: TObject; var Action: TCloseAction);
+procedure TfmEditor.frmGraphEditorClose(Sender: TObject;
+  var Action: TCloseAction);
 begin
   DestroyGraph(Graph); // Освобождение занятой памяти
 end;

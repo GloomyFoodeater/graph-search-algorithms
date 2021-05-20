@@ -10,7 +10,7 @@ const
 type
 
   // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  TDesign = (dgPassive, dgActive, dgVisited, dgEndPoint);
 
   // Тип списка смежности
   TPAdjVertice = TPItem;
@@ -46,7 +46,7 @@ procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
 function AreAdjacent(const G: TGraph; v, u: Integer): Boolean;
 
 { Процедура нахождения вершины по точке на холсте }
-function Centralize(const G: TGraph; const P: TPoint;
+function Centralize(const G: TGraph; const P: TPoint; R: Integer;
   out Vertice: TPVertice): Boolean;
 
 { Функция вычисления расстояния между двумя точками в пикселях }
@@ -88,17 +88,17 @@ begin
     Vertice := Vertice.Next;
 end;
 
-function Centralize(const G: TGraph; const P: TPoint;
+function Centralize(const G: TGraph; const P: TPoint; R: Integer;
   out Vertice: TPVertice): Boolean;
 begin
   Vertice := G.Head;
-  Result := (Vertice = nil) or (Distance(Vertice.Center, P) <= G.R);
+  Result := (Vertice = nil) or (Distance(Vertice.Center, P) <= R);
 
   // Цикл А1. Поиск последней вершины с близкими координатами
   while not Result and (Vertice.Next <> nil) do
   begin
     Vertice := Vertice.Next;
-    Result := Distance(Vertice.Center, P) <= G.R;
+    Result := Distance(Vertice.Center, P) <= R;
   end; // Конец А1
 
   if not Result then
@@ -136,14 +136,11 @@ procedure AddArc(var G: TGraph; v, u: Integer);
 var
   Vertice: TPVertice;
 begin
-  if not AreAdjacent(G, v, u) then
-  begin
-    GetByNumber(G, v, Vertice);
-    Inc(Vertice.Deg);
+  GetByNumber(G, v, Vertice);
+  Inc(Vertice.Deg);
 
-    // Сохранение соседа в список смежности
-    Push(Vertice.Head, u);
-  end;
+  // Сохранение соседа в список смежности
+  Push(Vertice.Head, u);
 end;
 
 procedure DeleteVertice(var G: TGraph; v: Integer);
@@ -215,9 +212,6 @@ var
   AdjVertice, PrevAdjVertice: TPAdjVertice;
   isFound: Boolean;
 begin
-
-  if not AreAdjacent(G, v, u) then
-    Exit;
 
   // Получение начала дуги
   GetByNumber(G, v, Vertice);

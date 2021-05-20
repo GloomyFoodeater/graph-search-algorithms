@@ -93,10 +93,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  Result := Path <> nil;
+  Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
-  while Path <> nil do
+  while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(Graph, v, Vertice);
@@ -108,15 +108,27 @@ end;
 // Метод создания формы
 procedure TfmEditor.fmEditorCreate(Sender: TObject);
 begin
-  State := stNone;
-  InitializeGraph(Graph, 40);
+
+  State := stNone; // Инициализация режима работы
+  InitializeGraph(Graph, 40); // Инициализация графа
+
+  // Инициализация начальных имён файлов
   VerticesFileName := '';
   ArcsFileName := '';
-  VStart := nil;
+
+  // Инициализация графических настроек
+  with pbCanvas.Canvas do
+  begin
+    Pen.Width := 3;
+    Font.Size := 15;
+    Font.Style := [fsBold];
+    VStart := nil;
+  end;
 end;
 
 // Метод закрытия формы
-procedure TfmEditor.fmEditorClose(Sender: TObject; var Action: TCloseAction);
+procedure TfmEditor.fmEditorClose(Sender: TObject;
+  var Action: TCloseAction);
 begin
   DestroyGraph(Graph); // Освобождение занятой памяти
 end;

@@ -41,6 +41,9 @@ function Pop(var Stack: TStack): Integer;
 { Функция извлечения из очереди }
 function Dequeue(var Queue: TQueue): Integer;
 
+{ Функция проверки списка на пустоту }
+function isEmpty(const Head: TPItem): Boolean;
+
 implementation
 
 procedure InitializeStack(var Stack: TStack);
@@ -79,7 +82,7 @@ begin
   Item.Next := nil;
 
   // Перемещение вершины стека
-  if Stack <> nil then
+  if not isEmpty(Stack) then
     Item.Next := Stack;
   Stack := Item;
 
@@ -96,7 +99,7 @@ begin
   Item.Next := nil;
 
   // Сохранение нового элемента
-  if Queue.Head <> nil then
+  if not isEmpty(Queue.Head) then
     Queue.Tail.Next := Item
   else
     Queue.Head := Item;
@@ -110,7 +113,7 @@ var
   Item: TPItem; // Извлекаемое звено списка
 begin
 
-  if Stack <> nil then
+  if not isEmpty(Stack) then
   begin
     // Перемещение вершины стека
     Item := Stack;
@@ -129,7 +132,7 @@ function Dequeue;
 var
   Item: TPItem; // Извлекаемое звено списка
 begin
-  if Queue.Head <> nil then
+  if not isEmpty(Queue.Head) then
   begin
 
     // Перемещение начала очереди
@@ -145,6 +148,11 @@ begin
   end
   else
     Result := 0; // Ошибка при извлечении
+end;
+
+function isEmpty;
+begin
+  Result := Head = nil;
 end;
 
 end.

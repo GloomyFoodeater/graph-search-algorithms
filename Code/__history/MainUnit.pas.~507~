@@ -35,15 +35,15 @@ type
     N1: TMenuItem;
     nOpen: TMenuItem;
     nSaveAs: TMenuItem;
-    sdVertices: TSaveDialog;
-    sdArcs: TSaveDialog;
-    odVertices: TOpenDialog;
-    odArcs: TOpenDialog;
+    sdVerticeSaver: TSaveDialog;
+    sdArcsSaver: TSaveDialog;
+    odVerticeOpener: TOpenDialog;
+    odArcsOpener: TOpenDialog;
     Label1: TLabel;
     Label2: TLabel;
     pbCanvas: TPaintBox;
-    procedure fmEditorCreate(Sender: TObject);
-    procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
+    procedure frmGraphEditorCreate(Sender: TObject);
+    procedure frmGraphEditorClose(Sender: TObject; var Action: TCloseAction);
     procedure SetClickState(Sender: TObject);
     procedure pbCanvasClick(Sender: TObject);
     procedure nExitClick(Sender: TObject);
@@ -93,10 +93,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  Result := Path <> nil;
+  Result := not isEmpty(Path);
 
   // Цикл А1. Перекраска вершин пути
-  while Path <> nil do
+  while not isEmpty(Path) do
   begin
     v := Pop(Path);
     GetByNumber(Graph, v, Vertice);
@@ -106,17 +106,29 @@ begin
 end;
 
 // Метод создания формы
-procedure TfmEditor.fmEditorCreate(Sender: TObject);
+procedure TfmEditor.frmGraphEditorCreate(Sender: TObject);
 begin
-  State := stNone;
-  InitializeGraph(Graph, 40);
+
+  State := stNone; // Инициализация режима работы
+  InitializeGraph(Graph, 40); // Инициализация графа
+
+  // Инициализация начальных имён файлов
   VerticesFileName := '';
   ArcsFileName := '';
-  VStart := nil;
+
+  // Инициализация графических настроек
+  with pbCanvas.Canvas do
+  begin
+    Pen.Width := 3;
+    Font.Size := 15;
+    Font.Style := [fsBold];
+    VStart := nil;
+  end;
 end;
 
 // Метод закрытия формы
-procedure TfmEditor.fmEditorClose(Sender: TObject; var Action: TCloseAction);
+procedure TfmEditor.frmGraphEditorClose(Sender: TObject;
+  var Action: TCloseAction);
 begin
   DestroyGraph(Graph); // Освобождение занятой памяти
 end;
@@ -213,26 +225,26 @@ var
   fArcs: TArcFile;
   isSuccess: Boolean;
 begin
-  odVertices.FileName := '';
-  odArcs.FileName := '';
+  odVerticeOpener.FileName := '';
+  odArcsOpener.FileName := '';
 
   // Выбор файла с вершинами
-  if not odVertices.Execute then
+  if not odVerticeOpener.Execute then
     Exit;
 
   // Проверка корректности расширения
-  if ExtractFileExt(odVertices.FileName) <> '.ver' then
+  if ExtractFileExt(odVerticeOpener.FileName) <> '.ver' then
   begin
     ShowMessage('Выбран файл с неверным расширением.');
     Exit;
   end;
 
   // Выбор файла с дугами
-  if not odArcs.Execute then
+  if not odArcsOpener.Execute then
     Exit;
 
   // Проверка корректности расширения
-  if ExtractFileExt(odArcs.FileName) <> '.arc' then
+  if ExtractFileExt(odArcsOpener.FileName) <> '.arc' then
   begin
     ShowMessage('Выбран файл с неверным расширением.');
     Exit;
@@ -243,8 +255,8 @@ begin
   InitializeGraph(Graph, 40);
 
   // Подготовка файлов
-  System.Assign(fVertices, odVertices.FileName);
-  System.Assign(fArcs, odArcs.FileName);
+  System.Assign(fVertices, odVerticeOpener.FileName);
+  System.Assign(fArcs, odArcsOpener.FileName);
   Reset(fVertices);
   Reset(fArcs);
 
@@ -260,8 +272,8 @@ begin
   end
   else
   begin
-    VerticesFileName := odVertices.FileName;
-    ArcsFileName := odArcs.FileName;
+    VerticesFileName := odVerticeOpener.FileName;
+    ArcsFileName := odArcsOpener.FileName;
   end;
 
   // Закрытие файлов
@@ -276,34 +288,34 @@ end;
 procedure TfmEditor.nSaveAsClick(Sender: TObject);
 begin
 
-  sdVertices.FileName := '';
-  sdArcs.FileName := '';
+  sdVerticeSaver.FileName := '';
+  sdArcsSaver.FileName := '';
 
   // Выбор файла с вершинами
-  if not sdVertices.Execute then
+  if not sdVerticeSaver.Execute then
     Exit;
 
   // Проверка корректности расширения
-  if ExtractFileExt(sdVertices.FileName) <> '.ver' then
+  if ExtractFileExt(sdVerticeSaver.FileName) <> '.ver' then
   begin
     ShowMessage('Выбран файл с неверным расширением.');
     Exit;
   end;
 
   // Выбор файла с дугами
-  if not sdArcs.Execute then
+  if not sdArcsSaver.Execute then
     Exit;
 
   // Проверка корректности расширения
-  if ExtractFileExt(sdArcs.FileName) <> '.arc' then
+  if ExtractFileExt(sdArcsSaver.FileName) <> '.arc' then
   begin
     ShowMessage('Выбран файл с неверным расширением.');
     Exit;
   end;
 
   // Сохранение путей к файлу и сохранение графа
-  VerticesFileName := sdVertices.FileName;
-  ArcsFileName := sdArcs.FileName;
+  VerticesFileName := sdVerticeSaver.FileName;
+  ArcsFileName := sdArcsSaver.FileName;
   nSaveClick(Sender);
 
 end;
