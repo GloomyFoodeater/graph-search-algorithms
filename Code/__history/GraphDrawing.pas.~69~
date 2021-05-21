@@ -43,11 +43,11 @@ begin
   else
     Sign := 1;
 
-  p[2].x := EndX + Sign * trunc(cos(ArrAngle - Sign * LineAngle) * R);
-  p[2].y := EndY - Sign * trunc(sin(ArrAngle - Sign * LineAngle) * R);
+  p[2].x := EndX + Sign * trunc(cos(ArrAngle + Sign * LineAngle) * R);
+  p[2].y := EndY + Sign * trunc(sin(ArrAngle + Sign * LineAngle) * R);
 
-  p[4].x := EndX + Sign * trunc(cos(ArrAngle + Sign * LineAngle) * R);
-  p[4].y := EndY + Sign * trunc(sin(ArrAngle + Sign * LineAngle) * R);
+  p[4].x := EndX + Sign * trunc(sin(ArrAngle - Sign * LineAngle) * R);
+  p[4].y := EndY + Sign * trunc(cos(ArrAngle - Sign * LineAngle) * R);
 end;
 
 procedure DrawVertice(const Img: TCanvas; R: Integer; const Vertice: TPVertice);
@@ -148,14 +148,14 @@ begin
   Vertice := G.Head;
   while Vertice <> nil do
   begin
-    DrawVertice(Img, G.R, Vertice);
+    // DrawVertice(Img, G.R, Vertice);
     if Vertice.Design = dgVisited then
       Vertice.Design := dgPassive
     else if Vertice.Design = dgActive then
       Active := Vertice;
     Vertice := Vertice.Next;
   end;
-  DrawVertice(Img, G.R, Active);
+  // DrawVertice(Img, G.R, Active);
 
 end;
 

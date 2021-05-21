@@ -232,12 +232,8 @@ end;
 procedure TfmEditor.pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-  if (State = stMove) and (VStart <> nil) then
-  begin
-    VStart.Design := dgPassive;
+  if State = stMove then
     VStart := nil;
-    pbCanvas.Invalidate;
-  end;
 end;
 
 procedure TfmEditor.nOpenClick(Sender: TObject);

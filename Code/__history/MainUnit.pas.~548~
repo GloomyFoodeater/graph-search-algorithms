@@ -42,8 +42,11 @@ type
     lbSearch: TLabel;
     pbCanvas: TPaintBox;
     N1: TMenuItem;
+    nExport: TMenuItem;
     nExportBMP: TMenuItem;
     sdExport: TSaveDialog;
+    PNG1: TMenuItem;
+    PNG2: TMenuItem;
     sbMove: TSpeedButton;
     procedure fmEditorCreate(Sender: TObject);
     procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
@@ -57,12 +60,6 @@ type
     procedure nAboutClick(Sender: TObject);
     procedure pbCanvasPaint(Sender: TObject);
     procedure nExportBMPClick(Sender: TObject);
-    procedure pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
-      X, Y: Integer);
-    procedure pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
   private
     State: TClickState; // Переменная состояния для работы с графом
     Graph: TGraph; // Граф для редактирования
@@ -70,7 +67,7 @@ type
 
     function StartSearch(const Graph: TGraph; State: TClickState;
       v, u: Integer): Boolean;
-    function OpenGraph(var VerFile: TVerFile; var ArcFile: TArcFile): Boolean;
+    function OpenGraph(var fVertices: TVerFile; var fArcs: TArcFile): Boolean;
     procedure SaveGraph(var fVertices: TVerFile; var fArcs: TArcFile);
   end;
 
@@ -141,6 +138,7 @@ begin
   end;
 
   VStart := nil;
+  State := stNone;
   if (Sender as TSpeedButton).Down then
     State := TClickState((Sender as TSpeedButton).Tag)
   else
@@ -200,44 +198,7 @@ begin
 
   if State <> stNone then
     pbCanvas.Invalidate;
-end;
 
-procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var
-  Pos: TPoint;
-begin
-  if State = stMove then
-  begin
-    Pos := ScreenToClient(Mouse.CursorPos);
-    Centralize(Graph, Pos, VStart);
-    if VStart <> nil then
-      VStart.Design := dgActive;
-  end;
-end;
-
-procedure TfmEditor.pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
-  X, Y: Integer);
-var
-  Pos: TPoint;
-begin
-  if (State = stMove) and (VStart <> nil) then
-  begin
-    Pos := ScreenToClient(Mouse.CursorPos);
-    VStart.Center := Pos;
-    pbCanvas.Invalidate;
-  end;
-end;
-
-procedure TfmEditor.pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  if (State = stMove) and (VStart <> nil) then
-  begin
-    VStart.Design := dgPassive;
-    VStart := nil;
-    pbCanvas.Invalidate;
-  end;
 end;
 
 procedure TfmEditor.nOpenClick(Sender: TObject);
@@ -363,8 +324,8 @@ begin
   end;
 end;
 
-function TfmEditor.OpenGraph(var VerFile: TVerFile;
-  var ArcFile: TArcFile): Boolean;
+function TfmEditor.OpenGraph(var fVertices: TVerFile;
+  var fArcs: TArcFile): Boolean;
 var
   Vertice: TPVertice;
   AdjVertice: TPAdjVertice;
@@ -375,11 +336,11 @@ begin
   Result := true;
   New(Vertice);
   New(AdjVertice);
-  while Result and not Eof(VerFile) do
+  while Result and not Eof(fVertices) do
   begin
 
     // Чтение очередной вершины
-    Read(VerFile, Vertice^);
+    Read(fVertices, Vertice^);
     AddVertice(Graph, Vertice.Center);
 
     // Проверка корректности прочитанных вершины
@@ -393,12 +354,12 @@ begin
     v := 1;
     while Result and (v <= Vertice.Deg) do
     begin
-      Result := not Eof(ArcFile); // Проверка на недостаток соседей
+      Result := not Eof(fArcs); // Проверка на недостаток соседей
 
       // Чтение очередного соседа
       if Result then
       begin
-        Read(ArcFile, AdjVertice^);
+        Read(fArcs, AdjVertice^);
         AddArc(Graph, Vertice.Number, AdjVertice.Number);
         Inc(v);
         // Переход к следующему соседу

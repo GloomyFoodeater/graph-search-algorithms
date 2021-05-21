@@ -42,8 +42,11 @@ type
     lbSearch: TLabel;
     pbCanvas: TPaintBox;
     N1: TMenuItem;
+    nExport: TMenuItem;
     nExportBMP: TMenuItem;
     sdExport: TSaveDialog;
+    PNG1: TMenuItem;
+    PNG2: TMenuItem;
     sbMove: TSpeedButton;
     procedure fmEditorCreate(Sender: TObject);
     procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
@@ -141,6 +144,7 @@ begin
   end;
 
   VStart := nil;
+  State := stNone;
   if (Sender as TSpeedButton).Down then
     State := TClickState((Sender as TSpeedButton).Tag)
   else
@@ -200,6 +204,7 @@ begin
 
   if State <> stNone then
     pbCanvas.Invalidate;
+
 end;
 
 procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
@@ -207,13 +212,8 @@ procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
 var
   Pos: TPoint;
 begin
-  if State = stMove then
-  begin
-    Pos := ScreenToClient(Mouse.CursorPos);
-    Centralize(Graph, Pos, VStart);
-    if VStart <> nil then
-      VStart.Design := dgActive;
-  end;
+  Pos := ScreenToClient(Mouse.CursorPos);
+  Centralize(Graph, Pos, VStart);
 end;
 
 procedure TfmEditor.pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
@@ -232,12 +232,8 @@ end;
 procedure TfmEditor.pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-  if (State = stMove) and (VStart <> nil) then
-  begin
-    VStart.Design := dgPassive;
+  if State = stMove then
     VStart := nil;
-    pbCanvas.Invalidate;
-  end;
 end;
 
 procedure TfmEditor.nOpenClick(Sender: TObject);

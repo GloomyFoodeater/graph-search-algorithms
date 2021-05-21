@@ -116,6 +116,7 @@ end;
 procedure TfmEditor.fmEditorCreate(Sender: TObject);
 begin
   State := stNone;
+  Graph.wasEdited := false;
   InitializeGraph(Graph, 40);
   VStart := nil;
 end;
@@ -137,10 +138,12 @@ begin
       VStart.Design := dgPassive
     else
       Graph.isPainted := false;
+    Graph.wasEdited := true;
     pbCanvas.Invalidate;
   end;
 
   VStart := nil;
+  State := stNone;
   if (Sender as TSpeedButton).Down then
     State := TClickState((Sender as TSpeedButton).Tag)
   else
@@ -199,7 +202,10 @@ begin
   end; // Конец case
 
   if State <> stNone then
+  begin
+    Graph.wasEdited := true;
     pbCanvas.Invalidate;
+  end;
 end;
 
 procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
@@ -207,13 +213,8 @@ procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
 var
   Pos: TPoint;
 begin
-  if State = stMove then
-  begin
-    Pos := ScreenToClient(Mouse.CursorPos);
-    Centralize(Graph, Pos, VStart);
-    if VStart <> nil then
-      VStart.Design := dgActive;
-  end;
+  Pos := ScreenToClient(Mouse.CursorPos);
+  Centralize(Graph, Pos, VStart);
 end;
 
 procedure TfmEditor.pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
@@ -232,12 +233,8 @@ end;
 procedure TfmEditor.pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-  if (State = stMove) and (VStart <> nil) then
-  begin
-    VStart.Design := dgPassive;
+  if State = stMove then
     VStart := nil;
-    pbCanvas.Invalidate;
-  end;
 end;
 
 procedure TfmEditor.nOpenClick(Sender: TObject);
@@ -285,6 +282,7 @@ begin
   CloseFile(fArcs);
 
   // Перерисовка графа
+  Graph.wasEdited := true;
   pbCanvas.Invalidate;
 
 end;
@@ -336,6 +334,7 @@ procedure TfmEditor.nClearClick(Sender: TObject);
 begin
   DestroyGraph(Graph);
   InitializeGraph(Graph, 40);
+  Graph.wasEdited := true;
   pbCanvas.Invalidate;
 end;
 
@@ -415,7 +414,11 @@ end;
 
 procedure TfmEditor.pbCanvasPaint(Sender: TObject);
 begin
-  RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
+  if Graph.wasEdited then
+  begin
+    RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
+    Graph.wasEdited := false;
+  end;
 end;
 
 procedure TfmEditor.SaveGraph(var fVertices: TVerFile; var fArcs: TArcFile);
