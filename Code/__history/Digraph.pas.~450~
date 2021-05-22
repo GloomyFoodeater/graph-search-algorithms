@@ -5,7 +5,7 @@ interface
 uses System.Types, DynStructures, System.SysUtils;
 
 const
-  INFINITY = 1000000000;
+  INFINITY = 1000000;
 
 type
 
@@ -13,13 +13,13 @@ type
   TDesign = (dgPassive, dgActive, dgVisited);
 
   // Тип списка смежности
-  TPNeighbour = ^TNeighbour;
+  TPAdjVertice = ^TAdjVertice;
 
-  TNeighbour = record
+  TAdjVertice = record
     Number: Integer;
     Weight: Integer;
     isVisited: Boolean;
-    Next: TPNeighbour;
+    Next: TPAdjVertice;
   end;
 
   // Тип вершины графа
@@ -28,7 +28,7 @@ type
   TVertice = record
     Center: TPoint;
     Number: Integer;
-    Head: TPNeighbour;
+    Head: TPAdjVertice;
     Next: TPVertice;
     Deg: Integer;
     Design: TDesign;
@@ -36,7 +36,7 @@ type
 
   // Типизированные файлы для работы с графами
   TVerFile = File of TVertice;
-  TArcFile = File of TNeighbour;
+  TArcFile = File of TAdjVertice;
 
   // Тип ориентированный граф
   TGraph = record
@@ -79,10 +79,6 @@ function Centralize(const G: TGraph; const P: TPoint;
 procedure OpenGraph(var G: TGraph; var VerFile: TVerFile;
   var ArcFile: TArcFile);
 
-// Подпрограмма сохранения графа в типизированный файл
-procedure SaveGraph(var G: TGraph; var VerFile: TVerFile;
-  var ArcFile: TArcFile);
-
 { Процедура преобразования графа в матрицу весов }
 procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 
@@ -93,27 +89,27 @@ implementation
 
 function AreAdjacent(const G: TGraph; Vertice: TPVertice; u: Integer): Boolean;
 var
-  Neighbour: TPNeighbour;
+  AdjVertice: TPAdjVertice;
 begin
   Result := false;
 
-  Neighbour := Vertice.Head;
-  while not Result and (Neighbour <> nil) do
+  AdjVertice := Vertice.Head;
+  while not Result and (AdjVertice <> nil) do
   begin
-    Result := Neighbour.Number = u;
-    Neighbour := Neighbour.Next;
+    Result := AdjVertice.Number = u;
+    AdjVertice := AdjVertice.Next;
   end;
 end;
 
-procedure DestroyAdjList(var Head: TPNeighbour);
+procedure DestroyAdjList(var Head: TPAdjVertice);
 var
-  Neighbour: TPNeighbour;
+  AdjVertice: TPAdjVertice;
 begin
   while Head <> nil do
   begin
-    Neighbour := Head;
+    AdjVertice := Head;
     Head := Head.Next;
-    Dispose(Neighbour);
+    Dispose(AdjVertice);
   end;
   Head := nil;
 end;
@@ -148,7 +144,7 @@ end;
 procedure AddArc;
 var
   Vertice: TPVertice;
-  Neighbour: TPNeighbour;
+  AdjVertice: TPAdjVertice;
 begin
   GetByNumber(G, v, Vertice);
   if not AreAdjacent(G, Vertice, u) then
@@ -157,12 +153,12 @@ begin
     Inc(Vertice.Deg);
 
     // Сохранение соседа в список смежности
-    New(Neighbour);
-    Neighbour.Number := u;
-    Neighbour.Weight := w;
-    Neighbour.isVisited := false;
-    Neighbour.Next := Vertice.Head;
-    Vertice.Head := Neighbour;
+    New(AdjVertice);
+    AdjVertice.Number := u;
+    AdjVertice.Weight := w;
+    AdjVertice.isVisited := false;
+    AdjVertice.Next := Vertice.Head;
+    Vertice.Head := AdjVertice;
 
   end;
 end;
@@ -170,7 +166,7 @@ end;
 procedure DeleteVertice;
 var
   PrevVertice, Vertice: TPVertice;
-  PrevAdjVertice, Neighbour: TPNeighbour;
+  PrevAdjVertice, AdjVertice: TPAdjVertice;
 begin
   Dec(G.Order);
 
@@ -207,24 +203,24 @@ begin
 
     // Цикл А2. Проход по соседям вершины
     PrevAdjVertice := nil;
-    Neighbour := Vertice.Head;
-    while Neighbour <> nil do
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
 
       // Удаление соседа текущей вершины
-      if Neighbour.Number = v then
+      if AdjVertice.Number = v then
       begin
         if PrevAdjVertice = nil then
-          Vertice.Head := Neighbour.Next
+          Vertice.Head := AdjVertice.Next
         else
-          PrevAdjVertice.Next := Neighbour.Next;
-        Dispose(Neighbour);
+          PrevAdjVertice.Next := AdjVertice.Next;
+        Dispose(AdjVertice);
       end
-      else if Neighbour.Number > v then
-        Dec(Neighbour.Number); // Уменьшение номера соседа
+      else if AdjVertice.Number > v then
+        Dec(AdjVertice.Number); // Уменьшение номера соседа
 
-      PrevAdjVertice := Neighbour;
-      Neighbour := Neighbour.Next;
+      PrevAdjVertice := AdjVertice;
+      AdjVertice := AdjVertice.Next;
     end; // Конец А2
     Vertice := Vertice.Next;
   end; // Конец А1
@@ -233,7 +229,7 @@ end;
 procedure DeleteArc;
 var
   Vertice: TPVertice;
-  Neighbour, PrevAdjVertice: TPNeighbour;
+  AdjVertice, PrevAdjVertice: TPAdjVertice;
   isFound: Boolean;
 begin
 
@@ -247,7 +243,7 @@ begin
 
   // Получение первого соседа
   PrevAdjVertice := Vertice.Head;
-  Neighbour := nil;
+  AdjVertice := nil;
 
   // Поиск звена перед звеном с искомым соседом
   if (PrevAdjVertice = nil) or (PrevAdjVertice.Number = u) then
@@ -269,14 +265,14 @@ begin
       isFound := (PrevAdjVertice = nil) or (PrevAdjVertice.Next.Number = u);
     end;
 
-    Neighbour := PrevAdjVertice.Next;
-    PrevAdjVertice.Next := Neighbour.Next;
+    AdjVertice := PrevAdjVertice.Next;
+    PrevAdjVertice.Next := AdjVertice.Next;
   end;
 
   // Удаление соседа
-  if Neighbour <> nil then
+  if AdjVertice <> nil then
   begin
-    Dispose(Neighbour);
+    Dispose(AdjVertice);
   end;
 
 end;
@@ -334,12 +330,12 @@ end;
 procedure OpenGraph;
 var
   Vertice: TPVertice;
-  Neighbour: TPNeighbour;
+  AdjVertice: TPAdjVertice;
   v: Integer;
 begin
   InitializeGraph(G, 40);
   New(Vertice);
-  New(Neighbour);
+  New(AdjVertice);
   // Цикл А1. Проход по файлу вершин
   while not Eof(VerFile) do
   begin
@@ -351,43 +347,20 @@ begin
     // Цикл А2. Частичный проход по файлу рёбер
     for v := 1 to Vertice.Deg do
     begin
-      Read(ArcFile, Neighbour^);
-      AddArc(G, Vertice.Number, Neighbour.Number, Neighbour.Weight);
+      Read(ArcFile, AdjVertice^);
+      AddArc(G, Vertice.Number, AdjVertice.Number, AdjVertice.Weight);
     end; // Конец А2
   end; // Конец А1
 
   Dispose(Vertice);
-  Dispose(Neighbour);
-end;
-
-procedure SaveGraph;
-var
-  Vertice: TPVertice;
-  Neighbour: TPNeighbour;
-begin
-
-  // Цикл А1. Проход по вершинам
-  Vertice := G.Head;
-  while Vertice <> nil do
-  begin
-    Write(VerFile, Vertice^);
-
-    // Цикл А2. Проход по соседям
-    Neighbour := Vertice.Head;
-    while Neighbour <> nil do
-    begin
-      Write(ArcFile, Neighbour^);
-      Neighbour := Neighbour.Next;
-    end; // Конец А1
-    Vertice := Vertice.Next;
-  end; // Конец А2
+  Dispose(AdjVertice);
 end;
 
 procedure ToWeightMatrix;
 var
   v, u: Integer;
   Vertice: TPVertice;
-  Neighbour: TPNeighbour;
+  AdjVertice: TPAdjVertice;
 begin
 
   // Инициализация матрицы
@@ -402,11 +375,11 @@ begin
   begin
 
     // Цикл A3. Проход по соседям вершины
-    Neighbour := Vertice.Head;
-    while Neighbour <> nil do
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
     begin
-      Matrix[Vertice.Number - 1, Neighbour.Number - 1] := Neighbour.Weight;
-      Neighbour := Neighbour.Next;
+      Matrix[Vertice.Number - 1, AdjVertice.Number - 1] := 1;
+      AdjVertice := AdjVertice.Next;
     end; // Конец A3
 
     Vertice := Vertice.Next;

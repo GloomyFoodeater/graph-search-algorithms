@@ -67,7 +67,7 @@ type
     State: TClickState; // Переменная состояния для работы с графом
     Graph: TGraph; // Граф для редактирования
     VStart: TPVertice; // Указатель на запомненную вершину
-    procedure StartSearch(State: TClickState; v, u: Integer);
+    function StartSearch(State: TClickState; v, u: Integer): Boolean;
   end;
 
 var
@@ -96,8 +96,7 @@ begin
   begin
     MakePassive(Graph);
     pbCanvas.Invalidate;
-  end
-  else if VStart <> nil then
+  end else if VStart <> nil then
   begin
     VStart.Design := dgPassive;
     VStart := nil;
@@ -115,6 +114,7 @@ var
   Pos: TPoint; // Позиция курсора мыши
   VEnd: TPVertice; // Указатель на вершину
   mrInput: TModalResult;
+  isFound: Boolean;
 begin
 
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -124,46 +124,52 @@ begin
   case State of
     stAddVertice: // Добавление вершины
       AddVertice(Graph, Pos);
-
     stDeleteVertice: // Удаление вершины
       if Centralize(Graph, Pos, VEnd) then
         DeleteVertice(Graph, VEnd.Number);
-
     stAddArc, stDeleteArc, stDFS, stBFS, stDijkstra: // Действия по 2-м вершинам
-
-      if (VStart <> nil) and Centralize(Graph, Pos, VEnd) then
       begin
-        case State of
-          stAddArc: // Добавление дуги
-            begin
-              if not cbNoWeight.Checked then
-                mrInput := fmArcInput.ShowModal
-              else
-                mrInput := mrOk;
+        if VStart = nil then
+        begin
+          if Centralize(Graph, Pos, VStart) then
+            VStart.Design := dgActive;
+        end
+        else if Centralize(Graph, Pos, VEnd) then
+        begin
 
-              if mrInput = mrOk then
+          // Перебор переменной состояния
+          case State of
+            stAddArc: // Добавление дуги
               begin
-                AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
-                if fmArcInput.isEdge then
-                  AddArc(Graph, VEnd.Number, VStart.Number, fmArcInput.Weight);
+                if not cbNoWeight.Checked then
+                  mrInput := fmArcInput.ShowModal
+                else
+                  mrInput := mrOk;
+                if mrInput = mrOk then
+                begin
+                  AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
+                  if fmArcInput.isEdge then
+                    AddArc(Graph, VEnd.Number, VStart.Number,
+                      fmArcInput.Weight);
+                end;
               end;
-            end;
+            stDeleteArc: // Удаление дуги
+              DeleteArc(Graph, VStart.Number, VEnd.Number);
+            stDFS, stBFS, stDijkstra: // Алгоритмы поиска
+              begin
+                isFound := StartSearch(State, VStart.Number, VEnd.Number);
+                if not isFound then
+                  ShowMessage('Путь не найден.');
+              end;
+          end; // Конец case
 
-          stDeleteArc: // Удаление дуги
-            DeleteArc(Graph, VStart.Number, VEnd.Number);
+          // Сброс начальной вершины
+          if VStart.Design = dgActive then
+            VStart.Design := dgPassive;
+          VStart := nil;
+        end; // Конец else if
 
-          stDFS, stBFS, stDijkstra: // Алгоритмы поиска
-            StartSearch(State, VStart.Number, VEnd.Number);
-        end; // Конец case
-
-        // Сброс начальной вершины
-        if VStart.Design = dgActive then
-          VStart.Design := dgPassive;
-        VStart := nil;
-      end
-      else if Centralize(Graph, Pos, VStart) then
-        VStart.Design := dgActive;
-
+      end;
   end; // Конец case
 
   if State <> stNone then
@@ -333,7 +339,7 @@ begin
   RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
 end;
 
-procedure TfmEditor.StartSearch;
+function TfmEditor.StartSearch;
 var
   Weights: TWeights; // Матрица весов
   Path: TStack; // Пройденный путь
@@ -351,10 +357,8 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  if Path = nil then
-    ShowMessage('Путь не найден.')
-  else
-    Visit(Graph, Path);
+  Result := Path <> nil;
+  Visit(Graph, Path);
 
 end;
 

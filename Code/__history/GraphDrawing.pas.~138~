@@ -1,8 +1,11 @@
-unit GraphDrawing;
+﻿unit GraphDrawing;
 
 interface
 
 uses Digraph, System.Types, Math, VCL.Graphics, DynStructures;
+
+type
+  ArcLine = Array [1 .. 5] of TPoint;
 
 procedure Visit(var G: TGraph; var Path: TStack);
 
@@ -12,9 +15,6 @@ procedure RedrawGraph(const Canvas: TCanvas; Width, Height: Integer;
   const G: TGraph);
 
 implementation
-
-type
-  ArcLine = Array [1 .. 5] of TPoint;
 
 procedure GetArcPoints(c1, c2: TPoint; R: Integer; out p: ArcLine);
 const
@@ -48,15 +48,26 @@ begin
   p[5].y := YEnd + Sign * trunc(sin(ArrowAngle + Sign * LineAngle) * (R div 2));
 end;
 
-procedure DrawVertice(const Canvas: TCanvas; R: Integer;
-  const Vertice: TPVertice);
+procedure DrawVertice(const Img: TCanvas; R: Integer; const Vertice: TPVertice);
 var
-  SNumber: String;
-  XMid, YMid: Integer;
+  Caption: String;
+  PosX: Integer; // Левый верхний край текста
+  Copy: Integer; // Копия номера вершины
 begin
-  with Canvas, Vertice^, Vertice.Center do
+
+  // Получение имени вершины и его x-координаты
+  Str(Vertice.Number, Caption);
+  Copy := Vertice.Number;
+  PosX := Vertice.Center.x;
+  while Copy <> 0 do
   begin
-    case Design of
+    Copy := Copy div 10;
+    PosX := PosX - 5;
+  end;
+
+  with Img do
+  begin
+    case Vertice.Design of
       dgPassive:
         begin
           Pen.Color := clBlack;
@@ -77,17 +88,22 @@ begin
         end;
     end;
 
-    Str(Vertice.Number, SNumber);
-    XMid := x - TextWidth(SNumber) div 2;
-    YMid := y - TextHeight(SNumber) div 2;
+    // Вывод круга
+    with Vertice.Center do
+      Ellipse(x - R, y - R, x + R, y + R);
 
-    Ellipse(x - R, y - R, x + R, y + R);
-    TextOut(XMid, YMid, SNumber);
+    // Вывод имени вершины
+    TextOut(PosX - 2, Vertice.Center.y - 10, Caption);
+
+    // Возврат значений пера и заливки
+    Pen.Color := clBlack;
+    Brush.Color := clWhite;
   end;
+
 end;
 
 procedure DrawArc(const Canvas: TCanvas; R: Integer;
-  const SrcCenter, DstCenter: TPoint; const Neighbour: TPNeighbour);
+  const SrcCenter, DstCenter: TPoint; const Neighbour: TPAdjVertice);
 var
   Points: ArcLine;
   SWeight: String;
@@ -97,7 +113,7 @@ begin
   with Canvas do
   begin
 
-    // ������������� ������ ��� ���������
+    // Инициализация данных для рисования
     if Neighbour.isVisited then
       Pen.Color := clTeal
     else
@@ -109,7 +125,7 @@ begin
     XMid := (Points[1].x + Points[2].x - WText) div 2;
     YMid := (Points[1].y + Points[2].y - HText) div 2;
 
-    // ��������� ���� � ����
+    // Рисование дуги и веса
     Polyline(Points);
     Rectangle(XMid, YMid, XMid + WText + 1, YMid + HText + 1);
     TextOut(XMid, YMid, SWeight);
@@ -120,7 +136,7 @@ end;
 procedure Visit;
 var
   Vertice: TPVertice;
-  Neighbour: TPNeighbour;
+  Neighbour: TPAdjVertice;
   v, u: Integer;
 begin
   while Path <> nil do
@@ -132,7 +148,7 @@ begin
     begin
       u := Pop(Path);
 
-      // ��������� �����
+      // Посещение ребра
       Neighbour := Vertice.Head;
       while u <> Neighbour.Number do
         Neighbour := Neighbour.Next;
@@ -147,7 +163,7 @@ end;
 procedure MakePassive;
 var
   Vertice: TPVertice;
-  Neighbour: TPNeighbour;
+  Neighbour: TPAdjVertice;
 begin
   Vertice := G.Head;
   while Vertice <> nil do
@@ -168,7 +184,7 @@ end;
 procedure RedrawGraph;
 var
   Vertice, AdjVertice, Active: TPVertice;
-  Neighbour: TPNeighbour;
+  Neighbour: TPAdjVertice;
 begin
   with Canvas do
   begin
@@ -180,7 +196,7 @@ begin
     Font.Style := [fsBold];
   end;
 
-  // ���������� ���
+  // Прорисовка дуг
   Vertice := G.Head;
   while Vertice <> nil do
   begin
@@ -194,7 +210,7 @@ begin
     Vertice := Vertice.Next;
   end;
 
-  // ���������� ������
+  // Прорисовка вершин
   Vertice := G.Head;
   while Vertice <> nil do
   begin

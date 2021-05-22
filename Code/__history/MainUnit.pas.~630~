@@ -130,39 +130,40 @@ begin
         DeleteVertice(Graph, VEnd.Number);
 
     stAddArc, stDeleteArc, stDFS, stBFS, stDijkstra: // Действия по 2-м вершинам
-
-      if (VStart <> nil) and Centralize(Graph, Pos, VEnd) then
       begin
-        case State of
-          stAddArc: // Добавление дуги
-            begin
-              if not cbNoWeight.Checked then
-                mrInput := fmArcInput.ShowModal
-              else
-                mrInput := mrOk;
+        if (VStart <> nil) and Centralize(Graph, Pos, VEnd) then
+        begin
 
-              if mrInput = mrOk then
+          // Перебор переменной состояния
+          case State of
+            stAddArc: // Добавление дуги
               begin
-                AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
-                if fmArcInput.isEdge then
-                  AddArc(Graph, VEnd.Number, VStart.Number, fmArcInput.Weight);
+                if not cbNoWeight.Checked then
+                  mrInput := fmArcInput.ShowModal
+                else
+                  mrInput := mrOk;
+                if mrInput = mrOk then
+                begin
+                  AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
+                  if fmArcInput.isEdge then
+                    AddArc(Graph, VEnd.Number, VStart.Number,
+                      fmArcInput.Weight);
+                end;
               end;
-            end;
+            stDeleteArc: // Удаление дуги
+              DeleteArc(Graph, VStart.Number, VEnd.Number);
+            stDFS, stBFS, stDijkstra: // Алгоритмы поиска
+              StartSearch(State, VStart.Number, VEnd.Number);
+          end; // Конец case
 
-          stDeleteArc: // Удаление дуги
-            DeleteArc(Graph, VStart.Number, VEnd.Number);
-
-          stDFS, stBFS, stDijkstra: // Алгоритмы поиска
-            StartSearch(State, VStart.Number, VEnd.Number);
-        end; // Конец case
-
-        // Сброс начальной вершины
-        if VStart.Design = dgActive then
-          VStart.Design := dgPassive;
-        VStart := nil;
-      end
-      else if Centralize(Graph, Pos, VStart) then
-        VStart.Design := dgActive;
+          // Сброс начальной вершины
+          if VStart.Design = dgActive then
+            VStart.Design := dgPassive;
+          VStart := nil;
+        end
+        else if Centralize(Graph, Pos, VStart) then
+          VStart.Design := dgActive;
+      end; // Конец else if
 
   end; // Конец case
 

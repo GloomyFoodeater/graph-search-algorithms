@@ -12,6 +12,8 @@ type
   // Тип режима работы с графом
   TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stMove,
     stDFS, stBFS, stDijkstra, stNone);
+  TVerFile = File of TVertice;
+  TArcFile = File of TAdjVertice;
 
   TfmEditor = class(TForm)
     plFunctionsContainer: TPanel;
@@ -59,15 +61,20 @@ type
     procedure nSaveAsClick(Sender: TObject);
     procedure nExitClick(Sender: TObject);
     procedure nClearClick(Sender: TObject);
+    procedure pbCanvasPaint(Sender: TObject);
     procedure nExportBMPClick(Sender: TObject);
     procedure nAboutClick(Sender: TObject);
     procedure cbNoWeightClick(Sender: TObject);
-    procedure pbCanvasPaint(Sender: TObject);
   private
     State: TClickState; // Переменная состояния для работы с графом
     Graph: TGraph; // Граф для редактирования
     VStart: TPVertice; // Указатель на запомненную вершину
-    procedure StartSearch(State: TClickState; v, u: Integer);
+
+    function StartSearch(State: TClickState; v, u: Integer): Boolean;
+    procedure OpenGraph(var G: TGraph; var VerFile: TVerFile;
+      var ArcFile: TArcFile);
+    procedure SaveGraph(var G: TGraph; var VerFile: TVerFile;
+      var ArcFile: TArcFile);
   end;
 
 var
@@ -96,8 +103,9 @@ begin
   begin
     MakePassive(Graph);
     pbCanvas.Invalidate;
-  end
-  else if VStart <> nil then
+  end;
+
+  if VStart <> nil then
   begin
     VStart.Design := dgPassive;
     VStart := nil;
@@ -115,6 +123,7 @@ var
   Pos: TPoint; // Позиция курсора мыши
   VEnd: TPVertice; // Указатель на вершину
   mrInput: TModalResult;
+  isFound: Boolean;
 begin
 
   Pos := ScreenToClient(Mouse.CursorPos);
@@ -124,46 +133,52 @@ begin
   case State of
     stAddVertice: // Добавление вершины
       AddVertice(Graph, Pos);
-
     stDeleteVertice: // Удаление вершины
       if Centralize(Graph, Pos, VEnd) then
         DeleteVertice(Graph, VEnd.Number);
-
     stAddArc, stDeleteArc, stDFS, stBFS, stDijkstra: // Действия по 2-м вершинам
-
-      if (VStart <> nil) and Centralize(Graph, Pos, VEnd) then
       begin
-        case State of
-          stAddArc: // Добавление дуги
-            begin
-              if not cbNoWeight.Checked then
-                mrInput := fmArcInput.ShowModal
-              else
-                mrInput := mrOk;
+        if VStart = nil then
+        begin
+          if Centralize(Graph, Pos, VStart) then
+            VStart.Design := dgActive;
+        end
+        else if Centralize(Graph, Pos, VEnd) then
+        begin
 
-              if mrInput = mrOk then
+          // Перебор переменной состояния
+          case State of
+            stAddArc: // Добавление дуги
               begin
-                AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
-                if fmArcInput.isEdge then
-                  AddArc(Graph, VEnd.Number, VStart.Number, fmArcInput.Weight);
+                if not cbNoWeight.Checked then
+                  mrInput := fmArcInput.ShowModal
+                else
+                  mrInput := mrOk;
+                if mrInput = mrOk then
+                begin
+                  AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
+                  if fmArcInput.isEdge then
+                    AddArc(Graph, VEnd.Number, VStart.Number,
+                      fmArcInput.Weight);
+                end;
               end;
-            end;
+            stDeleteArc: // Удаление дуги
+              DeleteArc(Graph, VStart.Number, VEnd.Number);
+            stDFS, stBFS, stDijkstra: // Алгоритмы поиска
+              begin
+                isFound := StartSearch(State, VStart.Number, VEnd.Number);
+                if not isFound then
+                  ShowMessage('Путь не найден.');
+              end;
+          end; // Конец case
 
-          stDeleteArc: // Удаление дуги
-            DeleteArc(Graph, VStart.Number, VEnd.Number);
+          // Сброс начальной вершины
+          if VStart.Design = dgActive then
+            VStart.Design := dgPassive;
+          VStart := nil;
+        end; // Конец else if
 
-          stDFS, stBFS, stDijkstra: // Алгоритмы поиска
-            StartSearch(State, VStart.Number, VEnd.Number);
-        end; // Конец case
-
-        // Сброс начальной вершины
-        if VStart.Design = dgActive then
-          VStart.Design := dgPassive;
-        VStart := nil;
-      end
-      else if Centralize(Graph, Pos, VStart) then
-        VStart.Design := dgActive;
-
+      end;
   end; // Конец case
 
   if State <> stNone then
@@ -212,6 +227,7 @@ procedure TfmEditor.nOpenClick(Sender: TObject);
 var
   fVertices: TVerFile;
   fArcs: TArcFile;
+  isSuccess: Boolean;
   NewGraph: TGraph;
 begin
 
@@ -230,6 +246,7 @@ begin
 
   // Чтение графа
   try
+    InitializeGraph(NewGraph, 40);
     OpenGraph(NewGraph, fVertices, fArcs);
     DestroyGraph(Graph);
     Graph := NewGraph;
@@ -325,18 +342,13 @@ end;
 procedure TfmEditor.cbNoWeightClick(Sender: TObject);
 begin
   fmArcInput.isEdge := false;
-  fmArcInput.Weight := 1;
 end;
 
-procedure TfmEditor.pbCanvasPaint(Sender: TObject);
-begin
-  RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
-end;
-
-procedure TfmEditor.StartSearch;
+function TfmEditor.StartSearch;
 var
   Weights: TWeights; // Матрица весов
   Path: TStack; // Пройденный путь
+  Vertice: TPVertice; // Указатель на вершину
 begin
   ToWeightMatrix(Graph, Weights); // Преобразование в матрицу расстояний
 
@@ -351,11 +363,67 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  if Path = nil then
-    ShowMessage('Путь не найден.')
-  else
-    Visit(Graph, Path);
+  Result := Path <> nil;
+  Visit(Graph, Path);
 
+end;
+
+procedure TfmEditor.OpenGraph(var G: TGraph; var VerFile: TVerFile;
+  var ArcFile: TArcFile);
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+  v: Integer;
+begin
+
+  New(Vertice);
+  New(AdjVertice);
+  // Цикл А1. Проход по файлу вершин
+  while not Eof(VerFile) do
+  begin
+
+    // Чтение очередной вершины
+    Read(VerFile, Vertice^);
+    AddVertice(G, Vertice.Center);
+
+    // Цикл А2. Частичный проход по файлу рёбер
+    for v := 1 to Vertice.Deg do
+    begin
+      Read(ArcFile, AdjVertice^);
+      AddArc(G, Vertice.Number, AdjVertice.Number, AdjVertice.Weight);
+    end; // Конец А2
+  end; // Конец А1
+
+  Dispose(Vertice);
+  Dispose(AdjVertice);
+end;
+
+procedure TfmEditor.SaveGraph;
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+
+  // Цикл А1. Проход по вершинам
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+    Write(VerFile, Vertice^);
+
+    // Цикл А2. Проход по соседям
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
+    begin
+      Write(ArcFile, AdjVertice^);
+      AdjVertice := AdjVertice.Next;
+    end; // Конец А1
+    Vertice := Vertice.Next;
+  end; // Конец А2
+end;
+
+procedure TfmEditor.pbCanvasPaint(Sender: TObject);
+begin
+  RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
 end;
 
 end.

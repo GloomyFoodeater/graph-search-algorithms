@@ -61,7 +61,7 @@ object fmEditor: TfmEditor
       Height = 30
       AllowAllUp = True
       GroupIndex = 1
-      Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1076#1091#1075#1091
+      Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1077#1073#1088#1086
       OnClick = SetClickState
     end
     object btnDeleteNode: TSpeedButton
@@ -83,7 +83,7 @@ object fmEditor: TfmEditor
       Height = 30
       AllowAllUp = True
       GroupIndex = 1
-      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1076#1091#1075#1091
+      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1088#1077#1073#1088#1086
       OnClick = SetClickState
     end
     object btnDFS: TSpeedButton
