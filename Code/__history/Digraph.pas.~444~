@@ -1,0 +1,361 @@
+unit Digraph;
+
+interface
+
+uses System.Types, DynStructures, System.SysUtils;
+
+const
+  INFINITY = 1000000;
+
+type
+
+  // Тип перечисления стиля вершин
+  TDesign = (dgPassive, dgActive, dgVisited);
+
+  // Тип списка смежности
+  TPAdjVertice = ^TAdjVertice;
+
+  TAdjVertice = record
+    Number: Integer;
+    Weight: Integer;
+    isVisited: Boolean;
+    Next: TPAdjVertice;
+  end;
+
+  // Тип вершины графа
+  TPVertice = ^TVertice;
+
+  TVertice = record
+    Center: TPoint;
+    Number: Integer;
+    Head: TPAdjVertice;
+    Next: TPVertice;
+    Deg: Integer;
+    Design: TDesign;
+  end;
+
+  // Тип ориентированный граф
+  TGraph = record
+    Head: TPVertice;
+    Tail: TPVertice;
+    Order: Integer;
+    isPainted: Boolean;
+    R: Integer;
+  end;
+
+  // Тип матрицы весов
+  TWeights = array of array of Integer;
+
+  { Процедура инициализации графа }
+procedure InitializeGraph(var G: TGraph; R: Integer);
+
+{ Процедура очищения графа }
+procedure DestroyGraph(var G: TGraph);
+
+{ Процедура добавления вершины в граф }
+procedure AddVertice(var G: TGraph; const C: TPoint);
+
+{ Процедура добавления дуги в граф }
+procedure AddArc(var G: TGraph; v, u: Integer; w: Integer);
+
+{ Процедура удаления вершины из графа }
+procedure DeleteVertice(var G: TGraph; v: Integer);
+
+{ Процедура удаления дуги из графа }
+procedure DeleteArc(var G: TGraph; v, u: Integer);
+
+{ Процедура получения вершины по номеру }
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
+
+{ Процедура нахождения вершины по точке на холсте }
+function Centralize(const G: TGraph; const P: TPoint;
+  out Vertice: TPVertice): Boolean;
+
+{ Процедура преобразования графа в матрицу весов }
+procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
+
+{ Функция вычисления расстояния между двумя точками в пикселях }
+function Distance(const p1, p2: TPoint): Integer;
+
+implementation
+
+function AreAdjacent(const G: TGraph; v, u: Integer): Boolean;
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+  Result := false;
+  GetByNumber(G, v, Vertice);
+  AdjVertice := Vertice.Head;
+  while not Result and (AdjVertice <> nil) do
+  begin
+    Result := AdjVertice.Number = u;
+    AdjVertice := AdjVertice.Next;
+  end;
+end;
+
+procedure DestroyAdjList(var Head: TPAdjVertice); forward;
+
+{ Функция нахождения расстояния между точками на картинке }
+function Distance(const p1, p2: TPoint): Integer;
+begin
+  Result := Round(Sqrt(Sqr(p2.x - p1.x) + Sqr(p2.y - p1.y)));
+end;
+
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
+begin
+  Vertice := G.Head;
+  while (Vertice <> nil) and (Vertice.Number <> v) do
+    Vertice := Vertice.Next;
+end;
+
+function Centralize(const G: TGraph; const P: TPoint;
+  out Vertice: TPVertice): Boolean;
+begin
+  Vertice := G.Head;
+  Result := (Vertice = nil) or (Distance(Vertice.Center, P) <= G.R);
+
+  // Цикл А1. Поиск последней вершины с близкими координатами
+  while not Result and (Vertice.Next <> nil) do
+  begin
+    Vertice := Vertice.Next;
+    Result := Distance(Vertice.Center, P) <= G.R;
+  end; // Конец А1
+
+  if not Result then
+    Vertice := nil;
+end;
+
+procedure AddVertice(var G: TGraph; const C: TPoint);
+var
+  Vertice: TPVertice;
+begin
+  Inc(G.Order);
+
+  // Инициализация новой вершины
+  New(Vertice);
+  with Vertice^ do
+  begin
+    Center := C;
+    Number := G.Order;
+    Head := nil;
+    Next := nil;
+    Deg := 0;
+    Design := dgPassive;
+  end;
+
+  // Запись новой вершины
+  if G.Head = nil then
+    G.Head := Vertice
+  else
+    G.Tail.Next := Vertice;
+  G.Tail := Vertice;
+
+end;
+
+procedure AddArc;
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+  if not AreAdjacent(G, v, u) then
+  begin
+    GetByNumber(G, v, Vertice);
+    Inc(Vertice.Deg);
+
+    // Сохранение соседа в список смежности
+    New(AdjVertice);
+    AdjVertice.Number := u;
+    AdjVertice.Weight := w;
+    AdjVertice.isVisited := false;
+    AdjVertice.Next := Vertice.Head;
+    Vertice.Head := AdjVertice;
+
+  end;
+end;
+
+procedure DeleteVertice(var G: TGraph; v: Integer);
+var
+  PrevVertice, Vertice: TPVertice;
+  PrevAdjVertice, AdjVertice: TPAdjVertice;
+begin
+  Dec(G.Order);
+
+  if v = G.Head.Number then
+  begin
+    // Удаление головной вершины
+    Vertice := G.Head;
+    G.Head := G.Head.Next;
+  end
+  else
+  begin
+    // Удаление не головной вершины
+    GetByNumber(G, v - 1, PrevVertice);
+    Vertice := PrevVertice.Next;
+    PrevVertice.Next := Vertice.Next;
+  end;
+
+  // Освобождение памяти
+  DestroyAdjList(Vertice.Head);
+  Dispose(Vertice);
+
+  // Цикл А1. Проход по вершинам графа
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+
+    // Уменьшение номеров вершин
+    if Vertice.Number > v then
+      Dec(Vertice.Number);
+
+    // Изменение хвоста списка
+    if Vertice.Next = nil then
+      G.Tail := Vertice;
+
+    // Цикл А2. Проход по соседям вершины
+    PrevAdjVertice := nil;
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
+    begin
+
+      // Удаление соседа текущей вершины
+      if AdjVertice.Number = v then
+      begin
+        if PrevAdjVertice = nil then
+          Vertice.Head := AdjVertice.Next
+        else
+          PrevAdjVertice.Next := AdjVertice.Next;
+        Dispose(AdjVertice);
+      end
+      else if AdjVertice.Number > v then
+        Dec(AdjVertice.Number); // Уменьшение номера соседа
+
+      PrevAdjVertice := AdjVertice;
+      AdjVertice := AdjVertice.Next;
+    end; // Конец А2
+    Vertice := Vertice.Next;
+  end; // Конец А1
+end;
+
+procedure DeleteArc(var G: TGraph; v, u: Integer);
+var
+  Vertice: TPVertice;
+  AdjVertice, PrevAdjVertice: TPAdjVertice;
+  isFound: Boolean;
+begin
+
+  if not AreAdjacent(G, v, u) then
+    Exit;
+
+  // Получение начала дуги
+  GetByNumber(G, v, Vertice);
+
+  Dec(Vertice.Deg);
+
+  // Получение первого соседа
+  PrevAdjVertice := Vertice.Head;
+  AdjVertice := nil;
+
+  // Поиск звена перед звеном с искомым соседом
+  if (PrevAdjVertice = nil) or (PrevAdjVertice.Number = u) then
+  begin
+    if PrevAdjVertice <> nil then
+      Vertice.Head := PrevAdjVertice.Next
+    else
+      Vertice.Head := nil;
+  end
+  else
+  begin
+
+    isFound := (PrevAdjVertice.Next.Number = u) or (PrevAdjVertice = nil);
+
+    // Получение предыдущего соседа удаляемого
+    while not isFound do
+    begin
+      PrevAdjVertice := PrevAdjVertice.Next;
+      isFound := (PrevAdjVertice = nil) or (PrevAdjVertice.Next.Number = u);
+    end;
+
+    AdjVertice := PrevAdjVertice.Next;
+    PrevAdjVertice.Next := AdjVertice.Next;
+  end;
+
+  // Удаление соседа
+  if AdjVertice <> nil then
+  begin
+    Dispose(AdjVertice);
+  end;
+
+end;
+
+procedure InitializeGraph(var G: TGraph; R: Integer);
+begin
+  G.Head := nil;
+  G.Tail := nil;
+  G.Order := 0;
+  G.isPainted := false;
+  G.R := R;
+end;
+
+procedure DestroyGraph(var G: TGraph);
+var
+  Vertice: TPVertice;
+begin
+
+  // Цикл А1. Освобождение списка вершин
+  while G.Head <> nil do
+  begin
+    Vertice := G.Head;
+
+    // Цикл А2. Освобождение списка соседей вершины
+    DestroyAdjList(Vertice.Head);
+
+    G.Head := G.Head.Next;
+    Dispose(Vertice);
+  end; // Конец А1
+end;
+
+procedure DestroyAdjList(var Head: TPAdjVertice);
+var
+  AdjVertice: TPAdjVertice;
+begin
+  while Head <> nil do
+  begin
+    AdjVertice := Head;
+    Head := Head.Next;
+    Dispose(AdjVertice);
+  end;
+  Head := nil;
+end;
+
+procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
+var
+  v, u: Integer;
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+
+  // Инициализация матрицы
+  SetLength(Matrix, G.Order, G.Order);
+  for v := 1 to G.Order do
+    for u := 1 to G.Order do
+      Matrix[v - 1, u - 1] := INFINITY;
+
+  // Цикл А2. Проход по вершинам
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+
+    // Цикл A3. Проход по соседям вершины
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
+    begin
+      Matrix[Vertice.Number - 1, AdjVertice.Number - 1] := 1;
+      AdjVertice := AdjVertice.Next;
+    end; // Конец A3
+
+    Vertice := Vertice.Next;
+  end; // Конец A2
+end;
+
+end.

@@ -43,18 +43,18 @@ function Dequeue(var Queue: TQueue): Integer;
 
 implementation
 
-procedure InitializeStack(var Stack: TStack);
+procedure InitializeStack;
 begin
   Stack := nil;
 end;
 
-procedure InitializeQueue(var Queue: TQueue);
+procedure InitializeQueue;
 begin
   Queue.Head := nil;
   Queue.Tail := nil;
 end;
 
-procedure DestroyList(var Head: TPItem);
+procedure DestroyList;
 var
   Item: TPItem;
 begin
@@ -72,17 +72,10 @@ procedure Push;
 var
   Item: TPItem; // Вставляемое звено списка
 begin
-
-  // Инициализация нового элемента
   New(Item);
   Item.Number := n;
-  Item.Next := nil;
-
-  // Перемещение вершины стека
-  if Stack <> nil then
-    Item.Next := Stack;
+  Item.Next := Stack;
   Stack := Item;
-
 end;
 
 procedure Enqueue;
@@ -105,7 +98,7 @@ begin
   Queue.Tail := Item;
 end;
 
-function Pop(var Stack: TStack): Integer;
+function Pop;
 var
   Item: TPItem; // Извлекаемое звено списка
 begin
@@ -133,11 +126,8 @@ begin
   begin
 
     // Перемещение начала очереди
-    with Queue do
-    begin
-      Item := Head;
-      Head := Head.Next;
-    end;
+    Item := Queue.Head;
+    Queue.Head := Queue.Head.Next;
 
     // Извлечение элемента с очисткой указателя
     Result := Item.Number;

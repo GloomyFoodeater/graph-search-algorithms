@@ -13,7 +13,14 @@ type
   TDesign = (dgPassive, dgActive, dgVisited);
 
   // Тип списка смежности
-  TPAdjVertice = TPItem;
+  TPAdjVertice = ^TAdjVertice;
+
+  TAdjVertice = record
+    Number: Integer;
+    Weight: Integer;
+    isVisited: Boolean;
+    Next: TPAdjVertice;
+  end;
 
   // Тип вершины графа
   TPVertice = ^TVertice;
@@ -39,24 +46,17 @@ type
   // Тип матрицы весов
   TWeights = array of array of Integer;
 
-  { Процедура получения вершины по номеру }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
+  { Процедура инициализации графа }
+procedure InitializeGraph(var G: TGraph; R: Integer);
 
-{ Функция проверки вершин на смежность }
-function AreAdjacent(const G: TGraph; v, u: Integer): Boolean;
-
-{ Процедура нахождения вершины по точке на холсте }
-function Centralize(const G: TGraph; const P: TPoint;
-  out Vertice: TPVertice): Boolean;
-
-{ Функция вычисления расстояния между двумя точками в пикселях }
-function Distance(const p1, p2: TPoint): Integer;
+{ Процедура очищения графа }
+procedure DestroyGraph(var G: TGraph);
 
 { Процедура добавления вершины в граф }
 procedure AddVertice(var G: TGraph; const C: TPoint);
 
 { Процедура добавления дуги в граф }
-procedure AddArc(var G: TGraph; v, u: Integer);
+procedure AddArc(var G: TGraph; v, u: Integer; w: Integer);
 
 { Процедура удаления вершины из графа }
 procedure DeleteVertice(var G: TGraph; v: Integer);
@@ -64,48 +64,49 @@ procedure DeleteVertice(var G: TGraph; v: Integer);
 { Процедура удаления дуги из графа }
 procedure DeleteArc(var G: TGraph; v, u: Integer);
 
-{ Процедура инициализации графа }
-procedure InitializeGraph(var G: TGraph; R: Integer);
+{ Процедура получения вершины по номеру }
+procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
 
-{ Процедура очищения графа }
-procedure DestroyGraph(var G: TGraph);
+{ Процедура нахождения вершины по точке на холсте }
+function Centralize(const G: TGraph; const P: TPoint;
+  out Vertice: TPVertice): Boolean;
 
 { Процедура преобразования графа в матрицу весов }
 procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
 
+{ Функция вычисления расстояния между двумя точками в пикселях }
+function Distance(const p1, p2: TPoint): Integer;
+
 implementation
 
-{ Функция нахождения расстояния между точками на картинке }
-function Distance(const p1, p2: TPoint): Integer;
+function AreAdjacent(const G: TGraph; Vertice: TPVertice; u: Integer): Boolean;
+var
+  AdjVertice: TPAdjVertice;
 begin
-  Result := Round(Sqrt(Sqr(p2.x - p1.x) + Sqr(p2.y - p1.y)));
-end;
+  Result := false;
 
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
-begin
-  Vertice := G.Head;
-  while (Vertice <> nil) and (Vertice.Number <> v) do
-    Vertice := Vertice.Next;
-end;
-
-function Centralize(const G: TGraph; const P: TPoint;
-  out Vertice: TPVertice): Boolean;
-begin
-  Vertice := G.Head;
-  Result := (Vertice = nil) or (Distance(Vertice.Center, P) <= G.R);
-
-  // Цикл А1. Поиск последней вершины с близкими координатами
-  while not Result and (Vertice.Next <> nil) do
+  AdjVertice := Vertice.Head;
+  while not Result and (AdjVertice <> nil) do
   begin
-    Vertice := Vertice.Next;
-    Result := Distance(Vertice.Center, P) <= G.R;
-  end; // Конец А1
-
-  if not Result then
-    Vertice := nil;
+    Result := AdjVertice.Number = u;
+    AdjVertice := AdjVertice.Next;
+  end;
 end;
 
-procedure AddVertice(var G: TGraph; const C: TPoint);
+procedure DestroyAdjList(var Head: TPAdjVertice);
+var
+  AdjVertice: TPAdjVertice;
+begin
+  while Head <> nil do
+  begin
+    AdjVertice := Head;
+    Head := Head.Next;
+    Dispose(AdjVertice);
+  end;
+  Head := nil;
+end;
+
+procedure AddVertice;
 var
   Vertice: TPVertice;
 begin
@@ -132,21 +133,29 @@ begin
 
 end;
 
-procedure AddArc(var G: TGraph; v, u: Integer);
+procedure AddArc;
 var
   Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
 begin
-  if not AreAdjacent(G, v, u) then
+  GetByNumber(G, v, Vertice);
+  if not AreAdjacent(G, Vertice, u) then
   begin
-    GetByNumber(G, v, Vertice);
+
     Inc(Vertice.Deg);
 
     // Сохранение соседа в список смежности
-    Push(Vertice.Head, u);
+    New(AdjVertice);
+    AdjVertice.Number := u;
+    AdjVertice.Weight := w;
+    AdjVertice.isVisited := false;
+    AdjVertice.Next := Vertice.Head;
+    Vertice.Head := AdjVertice;
+
   end;
 end;
 
-procedure DeleteVertice(var G: TGraph; v: Integer);
+procedure DeleteVertice;
 var
   PrevVertice, Vertice: TPVertice;
   PrevAdjVertice, AdjVertice: TPAdjVertice;
@@ -168,7 +177,7 @@ begin
   end;
 
   // Освобождение памяти
-  DestroyList(Vertice.Head);
+  DestroyAdjList(Vertice.Head);
   Dispose(Vertice);
 
   // Цикл А1. Проход по вершинам графа
@@ -209,18 +218,18 @@ begin
   end; // Конец А1
 end;
 
-procedure DeleteArc(var G: TGraph; v, u: Integer);
+procedure DeleteArc;
 var
   Vertice: TPVertice;
   AdjVertice, PrevAdjVertice: TPAdjVertice;
   isFound: Boolean;
 begin
 
-  if not AreAdjacent(G, v, u) then
-    Exit;
-
   // Получение начала дуги
   GetByNumber(G, v, Vertice);
+
+  if not AreAdjacent(G, Vertice, u) then
+    Exit;
 
   Dec(Vertice.Deg);
 
@@ -260,7 +269,7 @@ begin
 
 end;
 
-procedure InitializeGraph(var G: TGraph; R: Integer);
+procedure InitializeGraph;
 begin
   G.Head := nil;
   G.Tail := nil;
@@ -269,7 +278,7 @@ begin
   G.R := R;
 end;
 
-procedure DestroyGraph(var G: TGraph);
+procedure DestroyGraph;
 var
   Vertice: TPVertice;
 begin
@@ -280,14 +289,37 @@ begin
     Vertice := G.Head;
 
     // Цикл А2. Освобождение списка соседей вершины
-    DestroyList(Vertice.Head);
+    DestroyAdjList(Vertice.Head);
 
     G.Head := G.Head.Next;
     Dispose(Vertice);
   end; // Конец А1
 end;
 
-procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
+procedure GetByNumber;
+begin
+  Vertice := G.Head;
+  while (Vertice <> nil) and (Vertice.Number <> v) do
+    Vertice := Vertice.Next;
+end;
+
+function Centralize;
+begin
+  Vertice := G.Head;
+  Result := (Vertice = nil) or (Distance(Vertice.Center, P) <= G.R);
+
+  // Цикл А1. Поиск последней вершины с близкими координатами
+  while not Result and (Vertice.Next <> nil) do
+  begin
+    Vertice := Vertice.Next;
+    Result := Distance(Vertice.Center, P) <= G.R;
+  end; // Конец А1
+
+  if not Result then
+    Vertice := nil;
+end;
+
+procedure ToWeightMatrix;
 var
   v, u: Integer;
   Vertice: TPVertice;
@@ -317,19 +349,9 @@ begin
   end; // Конец A2
 end;
 
-function AreAdjacent(const G: TGraph; v, u: Integer): Boolean;
-var
-  Vertice: TPVertice;
-  AdjVertice: TPAdjVertice;
+function Distance;
 begin
-  Result := false;
-  GetByNumber(G, v, Vertice);
-  AdjVertice := Vertice.Head;
-  while not Result and (AdjVertice <> nil) do
-  begin
-    Result := AdjVertice.Number = u;
-    AdjVertice := AdjVertice.Next;
-  end;
+  Result := Round(Sqrt(Sqr(p2.x - p1.x) + Sqr(p2.y - p1.y)));
 end;
 
 end.

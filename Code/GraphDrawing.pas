@@ -2,14 +2,17 @@ unit GraphDrawing;
 
 interface
 
-uses Digraph, System.Types, Math, VCL.ExtCtrls, VCL.Graphics;
+uses Digraph, System.Types, Math, VCL.ExtCtrls, VCL.Graphics, DynStructures;
+
+procedure Visit(var G: TGraph; var Path: TStack);
+
+procedure MakePassive(var G: TGraph);
 
 procedure RedrawGraph(const Img: TCanvas; Width, Height: Integer;
   const G: TGraph);
 
 implementation
 
-{ Процедура вычисления координат концов ребра на холсте }
 procedure GetArcPoints(c1, c2: TPoint; R: Integer; out p: Array of TPoint);
 const
   ArrAngle = (45 / 180) * pi;
@@ -43,11 +46,11 @@ begin
   else
     Sign := 1;
 
-  p[2].x := EndX + Sign * trunc(cos(ArrAngle - Sign * LineAngle) * R);
-  p[2].y := EndY - Sign * trunc(sin(ArrAngle - Sign * LineAngle) * R);
+  p[2].x := EndX + Sign * trunc(cos(ArrAngle - Sign * LineAngle) * (R div 2));
+  p[2].y := EndY - Sign * trunc(sin(ArrAngle - Sign * LineAngle) * (R div 2));
 
-  p[4].x := EndX + Sign * trunc(cos(ArrAngle + Sign * LineAngle) * R);
-  p[4].y := EndY + Sign * trunc(sin(ArrAngle + Sign * LineAngle) * R);
+  p[4].x := EndX + Sign * trunc(cos(ArrAngle + Sign * LineAngle) * (R div 2));
+  p[4].y := EndY + Sign * trunc(sin(ArrAngle + Sign * LineAngle) * (R div 2));
 end;
 
 procedure DrawVertice(const Img: TCanvas; R: Integer; const Vertice: TPVertice);
@@ -101,21 +104,86 @@ begin
 
 end;
 
-procedure DrawArc(const Img: TCanvas; R: Integer; const Src, Dest: TPVertice);
+procedure DrawArc(const Img: TCanvas; R: Integer; const Src, Dest: TPVertice;
+  Weight: Integer; isVisited: Boolean);
 var
   d: Integer;
   Points: Array [0 .. 4] of TPoint;
+  WeightString: String;
+  MiddleX, MiddleY: Integer;
 begin
+  if isVisited then
+  begin
+    Img.Pen.Color := clTeal;
+    Img.Brush.Color := clLime;
+  end
+  else
+  begin
+    Img.Pen.Color := clBlack;
+    Img.Brush.Color := clWhite;
+  end;
+
   d := Distance(Src.Center, Dest.Center);
   if d > R then
   begin
     GetArcPoints(Src.Center, Dest.Center, R, Points);
     Img.Polyline(Points);
+    Str(Weight, WeightString);
+    MiddleX := (Points[0].x + Points[1].x) div 2;
+    MiddleY := (Points[0].y + Points[1].y) div 2;
+    Img.TextOut(MiddleX, MiddleY, WeightString);
   end;
 end;
 
-procedure RedrawGraph(const Img: TCanvas; Width, Height: Integer;
-  const G: TGraph);
+procedure Visit;
+var
+  Vertice, Neighbour: TPVertice;
+  AdjVertice: TPAdjVertice;
+  v, u: Integer;
+begin
+  while Path <> nil do
+  begin
+    v := Pop(Path);
+    GetByNumber(G, v, Vertice);
+    Vertice.Design := dgVisited;
+    if Path <> nil then
+    begin
+      u := Pop(Path);
+
+      // Посещение ребра
+      AdjVertice := Vertice.Head;
+      while u <> AdjVertice.Number do
+        AdjVertice := AdjVertice.Next;
+      AdjVertice.isVisited := true;
+
+      Push(Path, u);
+    end;
+  end;
+  G.isPainted := true;
+end;
+
+procedure MakePassive;
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+    Vertice.Design := dgPassive;
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
+    begin
+      AdjVertice.isVisited := false;
+      AdjVertice := AdjVertice.Next;
+    end;
+
+    Vertice := Vertice.Next;
+  end;
+  G.isPainted := false;
+end;
+
+procedure RedrawGraph;
 var
   Vertice, AdjVertice, Active: TPVertice;
   Arc: TPAdjVertice;
@@ -138,7 +206,7 @@ begin
     while Arc <> nil do
     begin
       GetByNumber(G, Arc.Number, AdjVertice);
-      DrawArc(Img, G.R div 2, Vertice, AdjVertice);
+      DrawArc(Img, G.R, Vertice, AdjVertice, Arc.Weight, Arc.isVisited);
       Arc := Arc.Next;
     end;
     Vertice := Vertice.Next;
@@ -149,13 +217,12 @@ begin
   while Vertice <> nil do
   begin
     DrawVertice(Img, G.R, Vertice);
-    if Vertice.Design = dgVisited then
-      Vertice.Design := dgPassive
-    else if Vertice.Design = dgActive then
+    if Vertice.Design = dgActive then
       Active := Vertice;
     Vertice := Vertice.Next;
   end;
-  DrawVertice(Img, G.R, Active);
+  if Active <> nil then
+    DrawVertice(Img, G.R, Active);
 
 end;
 

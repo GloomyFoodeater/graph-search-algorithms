@@ -141,8 +141,12 @@
         <DCCReference Include="DynStructures.pas"/>
         <DCCReference Include="GraphSearch.pas"/>
         <DCCReference Include="GraphDrawing.pas"/>
-        <DCCReference Include="AboutForm.pas">
+        <DCCReference Include="AboutUnit.pas">
             <Form>frmAbout</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="ArcInputUnit.pas">
+            <Form>fmArcInput</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">

@@ -13,6 +13,7 @@ object fmEditor: TfmEditor
   Font.Style = []
   Menu = mmMain
   OldCreateOrder = False
+  Position = poScreenCenter
   OnClose = fmEditorClose
   OnCreate = fmEditorCreate
   PixelsPerInch = 96
@@ -155,6 +156,15 @@ object fmEditor: TfmEditor
       Caption = #1055#1077#1088#1077#1084#1077#1097#1072#1090#1100
       OnClick = SetClickState
     end
+    object cbNoWeight: TCheckBox
+      Left = 24
+      Top = 552
+      Width = 137
+      Height = 17
+      Caption = #1058#1086#1083#1100#1082#1086' '#1085#1077' '#1074#1079#1074#1077#1096#1077#1085#1085#1099#1077
+      TabOrder = 0
+      OnClick = cbNoWeightClick
+    end
   end
   object mmMain: TMainMenu
     Left = 8
@@ -185,7 +195,7 @@ object fmEditor: TfmEditor
       end
     end
     object nEdit: TMenuItem
-      Caption = #1056#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1090#1100
+      Caption = #1048#1079#1086#1073#1088#1072#1078#1077#1085#1080#1077
       object nExportBMP: TMenuItem
         Caption = #1069#1082#1089#1087#1086#1088#1090' '#1074' BMP'
         OnClick = nExportBMPClick

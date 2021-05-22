@@ -1,0 +1,429 @@
+unit MainUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls, Buttons, Menus, GraphSearch, Digraph,
+  DynStructures, GraphDrawing, AboutUnit, ArcInputUnit;
+
+type
+
+  // Тип режима работы с графом
+  TClickState = (stAddVertice, stAddArc, stDeleteVertice, stDeleteArc, stMove,
+    stDFS, stBFS, stDijkstra, stNone);
+  TVerFile = File of TVertice;
+  TArcFile = File of TAdjVertice;
+
+  TfmEditor = class(TForm)
+    plFunctionsContainer: TPanel;
+    btnAddNode: TSpeedButton;
+    btnAddLinl: TSpeedButton;
+    btnDeleteNode: TSpeedButton;
+    btnDeleteLink: TSpeedButton;
+    btnDFS: TSpeedButton;
+    btnBFS: TSpeedButton;
+    btnDijkstra: TSpeedButton;
+    mmMain: TMainMenu;
+    nFile: TMenuItem;
+    nEdit: TMenuItem;
+    nHelp: TMenuItem;
+    nSave: TMenuItem;
+    nExit: TMenuItem;
+    nClear: TMenuItem;
+    nAbout: TMenuItem;
+    nOpen: TMenuItem;
+    nSaveAs: TMenuItem;
+    sdVertices: TSaveDialog;
+    sdArcs: TSaveDialog;
+    odVertices: TOpenDialog;
+    odArcs: TOpenDialog;
+    lbEdit: TLabel;
+    lbSearch: TLabel;
+    pbCanvas: TPaintBox;
+    N1: TMenuItem;
+    nExportBMP: TMenuItem;
+    sdExport: TSaveDialog;
+    sbMove: TSpeedButton;
+    cbNoWeight: TCheckBox;
+    procedure fmEditorCreate(Sender: TObject);
+    procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
+    procedure SetClickState(Sender: TObject);
+    procedure pbCanvasClick(Sender: TObject);
+    procedure pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
+      X, Y: Integer);
+    procedure nOpenClick(Sender: TObject);
+    procedure nSaveClick(Sender: TObject);
+    procedure nSaveAsClick(Sender: TObject);
+    procedure nExitClick(Sender: TObject);
+    procedure nClearClick(Sender: TObject);
+    procedure pbCanvasPaint(Sender: TObject);
+    procedure nExportBMPClick(Sender: TObject);
+    procedure nAboutClick(Sender: TObject);
+    procedure cbNoWeightClick(Sender: TObject);
+  private
+    State: TClickState; // Переменная состояния для работы с графом
+    Graph: TGraph; // Граф для редактирования
+    VStart: TPVertice; // Указатель на запомненную вершину
+
+    function StartSearch(State: TClickState; v, u: Integer): Boolean;
+    procedure OpenGraph(var G: TGraph; var VerFile: TVerFile;
+      var ArcFile: TArcFile);
+    procedure SaveGraph(var fVertices: TVerFile; var fArcs: TArcFile);
+  end;
+
+var
+  fmEditor: TfmEditor;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfmEditor.fmEditorCreate(Sender: TObject);
+begin
+  State := stNone;
+  InitializeGraph(Graph, 40);
+  VStart := nil;
+end;
+
+procedure TfmEditor.fmEditorClose(Sender: TObject; var Action: TCloseAction);
+begin
+  DestroyGraph(Graph); // Освобождение занятой памяти
+end;
+
+procedure TfmEditor.SetClickState(Sender: TObject);
+begin
+
+  if Graph.isPainted then
+  begin
+    MakePassive(Graph);
+    pbCanvas.Invalidate;
+  end;
+
+  if VStart <> nil then
+  begin
+    VStart.Design := dgPassive;
+    VStart := nil;
+    pbCanvas.Invalidate;
+  end;
+
+  if (Sender as TSpeedButton).Down then
+    State := TClickState((Sender as TSpeedButton).Tag)
+  else
+    State := stNone;
+end;
+
+procedure TfmEditor.pbCanvasClick(Sender: TObject);
+var
+  Pos: TPoint; // Позиция курсора мыши
+  VEnd: TPVertice; // Указатель на вершину
+  mrInput: TModalResult;
+  isFound: Boolean;
+begin
+
+  Pos := ScreenToClient(Mouse.CursorPos);
+  if Graph.isPainted then
+    MakePassive(Graph);
+  // Перебор переменной состояния
+  case State of
+    stAddVertice: // Добавление вершины
+      AddVertice(Graph, Pos);
+    stDeleteVertice: // Удаление вершины
+      if Centralize(Graph, Pos, VEnd) then
+        DeleteVertice(Graph, VEnd.Number);
+    stAddArc, stDeleteArc, stDFS, stBFS, stDijkstra: // Действия по 2-м вершинам
+      begin
+        if VStart = nil then
+        begin
+          if Centralize(Graph, Pos, VStart) then
+            VStart.Design := dgActive;
+        end
+        else if Centralize(Graph, Pos, VEnd) then
+        begin
+
+          // Перебор переменной состояния
+          case State of
+            stAddArc: // Добавление дуги
+              begin
+                if not cbNoWeight.Checked then
+                  mrInput := fmArcInput.ShowModal
+                else
+                  mrInput := mrOk;
+                if mrInput = mrOk then
+                begin
+                  AddArc(Graph, VStart.Number, VEnd.Number, fmArcInput.Weight);
+                  if fmArcInput.isEdge then
+                    AddArc(Graph, VEnd.Number, VStart.Number,
+                      fmArcInput.Weight);
+                end;
+              end;
+            stDeleteArc: // Удаление дуги
+              DeleteArc(Graph, VStart.Number, VEnd.Number);
+            stDFS, stBFS, stDijkstra: // Алгоритмы поиска
+              begin
+                isFound := StartSearch(State, VStart.Number,
+                  VEnd.Number);
+                if not isFound then
+                  ShowMessage('Путь не найден.');
+              end;
+          end; // Конец case
+
+          // Сброс начальной вершины
+          if VStart.Design = dgActive then
+            VStart.Design := dgPassive;
+          VStart := nil;
+        end; // Конец else if
+
+      end;
+  end; // Конец case
+
+  if State <> stNone then
+    pbCanvas.Invalidate;
+end;
+
+procedure TfmEditor.pbCanvasMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  Pos: TPoint;
+begin
+  if State = stMove then
+  begin
+    Pos := ScreenToClient(Mouse.CursorPos);
+    Centralize(Graph, Pos, VStart);
+    if VStart <> nil then
+      VStart.Design := dgActive;
+  end;
+end;
+
+procedure TfmEditor.pbCanvasMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  if (State = stMove) and (VStart <> nil) then
+  begin
+    VStart.Design := dgPassive;
+    VStart := nil;
+    pbCanvas.Invalidate;
+  end;
+end;
+
+procedure TfmEditor.pbCanvasMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: Integer);
+var
+  Pos: TPoint;
+begin
+  if (State = stMove) and (VStart <> nil) then
+  begin
+    Pos := ScreenToClient(Mouse.CursorPos);
+    VStart.Center := Pos;
+    pbCanvas.Invalidate;
+  end;
+end;
+
+procedure TfmEditor.nOpenClick(Sender: TObject);
+var
+  fVertices: TVerFile;
+  fArcs: TArcFile;
+  isSuccess: Boolean;
+  NewGraph: TGraph;
+begin
+
+  odVertices.FileName := '';
+  odArcs.FileName := '';
+
+  // Выбор файла с вершинами
+  if not(odVertices.Execute and odArcs.Execute) then
+    Exit;
+
+  // Подготовка файлов
+  System.Assign(fVertices, odVertices.FileName);
+  System.Assign(fArcs, odArcs.FileName);
+  Reset(fVertices);
+  Reset(fArcs);
+
+  // Чтение графа
+  try
+    InitializeGraph(NewGraph, 40);
+    OpenGraph(NewGraph, fVertices, fArcs);
+    DestroyGraph(Graph);
+    Graph := NewGraph;
+    sdVertices.FileName := odVertices.FileName;
+    sdArcs.FileName := odArcs.FileName;
+  except
+    DestroyGraph(NewGraph);
+    ShowMessage('Ошибка при открытии графа');
+  end;
+
+  // Закрытие файлов
+  CloseFile(fVertices);
+  CloseFile(fArcs);
+
+  // Перерисовка графа
+  pbCanvas.Invalidate;
+
+end;
+
+procedure TfmEditor.nSaveClick(Sender: TObject);
+var
+  fVertices: TVerFile;
+  fArcs: TArcFile;
+begin
+
+  // Переход к "сохранению как"
+  if (sdVertices.FileName = '') or (sdArcs.FileName = '') then
+  begin
+    nSaveAsClick(Sender);
+    Exit
+  end;
+
+  // Подготовка файлов
+  System.Assign(fVertices, sdVertices.FileName);
+  System.Assign(fArcs, sdArcs.FileName);
+  Rewrite(fVertices);
+  Rewrite(fArcs);
+
+  // Сохранение графа
+  SaveGraph(fVertices, fArcs);
+
+  // Закрытие файлов
+  CloseFile(fVertices);
+  CloseFile(fArcs);
+end;
+
+procedure TfmEditor.nSaveAsClick(Sender: TObject);
+begin
+
+  sdVertices.FileName := '';
+  sdArcs.FileName := '';
+
+  if sdVertices.Execute and sdArcs.Execute then
+    nSaveClick(Sender);
+
+end;
+
+procedure TfmEditor.nExitClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfmEditor.nClearClick(Sender: TObject);
+begin
+  DestroyGraph(Graph);
+  InitializeGraph(Graph, 40);
+  pbCanvas.Invalidate;
+end;
+
+procedure TfmEditor.nExportBMPClick(Sender: TObject);
+var
+  Bitmap: TBitmap;
+begin
+  sdExport.FileName := '';
+  if sdExport.Execute then
+  begin
+    Bitmap := TBitmap.Create;
+    try
+      Bitmap.SetSize(pbCanvas.Width, pbCanvas.Height);
+      RedrawGraph(Bitmap.Canvas, Bitmap.Width, Bitmap.Height, Graph);
+      Bitmap.SaveToFile(sdExport.FileName);
+    finally
+      Bitmap.Free;
+    end;
+  end;
+end;
+
+procedure TfmEditor.nAboutClick(Sender: TObject);
+begin
+  frmAbout.Show;
+end;
+
+procedure TfmEditor.cbNoWeightClick(Sender: TObject);
+begin
+  fmArcInput.isEdge := false;
+end;
+
+function TfmEditor.StartSearch;
+var
+  Weights: TWeights; // Матрица весов
+  Path: TStack; // Пройденный путь
+  Vertice: TPVertice; // Указатель на вершину
+begin
+  ToWeightMatrix(Graph, Weights); // Преобразование в матрицу расстояний
+
+  // Выбор алгоритма поиска
+  case State of
+    stDFS:
+      DFS(Weights, v, u, Path);
+    stBFS:
+      BFS(Weights, v, u, Path);
+    stDijkstra:
+      Dijkstra(Weights, v, u, Path);
+  end;
+
+  // Результат о достижимости конечной вершины
+  Result := Path <> nil;
+  Visit(Graph, Path);
+
+end;
+
+procedure TfmEditor.OpenGraph(var G: TGraph; var VerFile: TVerFile;
+  var ArcFile: TArcFile);
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+  v: Integer;
+begin
+
+  New(Vertice);
+  New(AdjVertice);
+  // Цикл А1. Проход по файлу вершин
+  while not Eof(VerFile) do
+  begin
+
+    // Чтение очередной вершины
+    Read(VerFile, Vertice^);
+    AddVertice(G, Vertice.Center);
+
+    // Цикл А2. Частичный проход по файлу рёбер
+    for v := 1 to Vertice.Deg do
+    begin
+      Read(ArcFile, AdjVertice^);
+      AddArc(G, Vertice.Number, AdjVertice.Number, AdjVertice.Weight);
+    end; // Конец А2
+  end; // Конец А1
+
+  Dispose(Vertice);
+  Dispose(AdjVertice);
+end;
+
+procedure TfmEditor.SaveGraph(var fVertices: TVerFile; var fArcs: TArcFile);
+var
+  Vertice: TPVertice;
+  AdjVertice: TPAdjVertice;
+begin
+
+  // Цикл А1. Проход по вершинам
+  Vertice := Graph.Head;
+  while Vertice <> nil do
+  begin
+    Write(fVertices, Vertice^);
+
+    // Цикл А2. Проход по соседям
+    AdjVertice := Vertice.Head;
+    while AdjVertice <> nil do
+    begin
+      Write(fArcs, AdjVertice^);
+      AdjVertice := AdjVertice.Next;
+    end; // Конец А1
+    Vertice := Vertice.Next;
+  end; // Конец А2
+end;
+
+procedure TfmEditor.pbCanvasPaint(Sender: TObject);
+begin
+  RedrawGraph(pbCanvas.Canvas, pbCanvas.Width, pbCanvas.Height, Graph);
+end;
+
+end.
