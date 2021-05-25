@@ -38,34 +38,27 @@ const
 procedure RestorePath(const Graph: TWeights; const Parents: array of Integer;
   const Src, Dest: Integer; out Info: TSearchInfo);
 var
-  v, w: Integer;
+  v: Integer;
 begin
 
-  with Info do
+  InitializeStack(Info.Path); // Инициализация стека
+  v := Dest; // Сохранение конца пути
+  Info.ArcsCount := 0;
+  Info.Distance := 0;
+  // Цикл А1. Добавление очередного предка в пути
+  while (v <> Src) and (v <> 0) do
   begin
-    InitializeStack(Path); // Инициализация стека
-    v := Dest; // Сохранение конца пути
-    ArcsCount := 0;
-    Distance := 0;
-    // Цикл А1. Добавление очередного предка в пути
-    while (v <> Src) and (v <> 0) do
-    begin
-      Push(Path, v);
-      Inc(ArcsCount);
-      w := Graph[Parents[v - 1] - 1, v - 1];
-      if w = INF then
-        w := 0;
-      Distance := Distance + w;
-      v := Parents[v - 1];
-    end; // Конец А1
+    Push(Info.Path, v);
+    Inc(Info.ArcsCount);
+    Info.Distance := Info.Distance + Graph[v, Parents[v - 1]];
+    v := Parents[v - 1];
+  end; // Конец А1
 
-    Push(Path, v);
+  Push(Info.Path, v);
 
-    // Случай, если путь не был найден
-    if v = 0 then
-      DestroyList(Path);
-  end;
-
+  // Случай, если путь не был найден
+  if v = 0 then
+    DestroyList(Info.Path);
 end;
 
 procedure DFS(const Graph: TWeights; const Src, Dest: Integer;

@@ -13,7 +13,6 @@ object fmArcInput: TfmArcInput
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
-  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 16
   object leWeight: TLabeledEdit
@@ -40,6 +39,23 @@ object fmArcInput: TfmArcInput
     TabOrder = 0
     TextHint = #1042#1077#1089' '#1076#1091#1075#1080
   end
+  object cbUnweighted: TCheckBox
+    Left = 8
+    Top = 83
+    Width = 106
+    Height = 17
+    Caption = #1053#1077#1074#1079#1074#1077#1096#1077#1085#1085#1072#1103
+    TabOrder = 1
+    OnClick = cbUnweightedClick
+  end
+  object cbEdge: TCheckBox
+    Left = 158
+    Top = 80
+    Width = 89
+    Height = 22
+    Caption = #1056#1077#1073#1088#1086
+    TabOrder = 2
+  end
   object btnOK: TButton
     Left = 8
     Top = 129
@@ -47,7 +63,7 @@ object fmArcInput: TfmArcInput
     Height = 41
     Caption = 'OK'
     ModalResult = 1
-    TabOrder = 1
+    TabOrder = 3
     OnClick = btnOKClick
   end
   object btnCancel: TButton
@@ -57,6 +73,6 @@ object fmArcInput: TfmArcInput
     Height = 41
     Caption = #1054#1090#1084#1077#1085#1072
     ModalResult = 2
-    TabOrder = 2
+    TabOrder = 4
   end
 end

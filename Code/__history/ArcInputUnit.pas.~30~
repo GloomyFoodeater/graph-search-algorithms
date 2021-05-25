@@ -10,12 +10,15 @@ uses
 type
   TfmArcInput = class(TForm)
     leWeight: TLabeledEdit;
+    cbUnweighted: TCheckBox;
+    cbEdge: TCheckBox;
     btnOK: TButton;
     btnCancel: TButton;
     procedure btnOKClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
+    procedure cbUnweightedClick(Sender: TObject);
   public
     Weight: Integer;
+    isEdge: Boolean;
   end;
 
 var
@@ -30,16 +33,21 @@ procedure TfmArcInput.btnOKClick(Sender: TObject);
 var
   ErrCode: Integer;
 begin
-  Val(leWeight.Text, Weight, ErrCode);
-  if (ErrCode <> 0) or (Weight <= 0) then
+  isEdge := cbEdge.Checked;
+  if not cbUnweighted.Checked then
+    Val(leWeight.Text, Weight, ErrCode);
+  if (ErrCode <> 0) or (Weight <= 0) or cbUnweighted.Checked then
     Weight := 1;
 
   leWeight.Text := '';
+  cbUnweighted.Checked := false;
+  cbEdge.Checked := false;
 end;
 
-procedure TfmArcInput.FormCreate(Sender: TObject);
+procedure TfmArcInput.cbUnweightedClick(Sender: TObject);
 begin
-  Weight := 1;
+  with leWeight do
+    Enabled := not Enabled;
 end;
 
 end.

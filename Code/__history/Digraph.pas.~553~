@@ -3,7 +3,7 @@ unit Digraph;
 interface
 
 uses System.Types, DynStructures, System.SysUtils, ComObj, Variants, ActiveX,
-  Math;
+  Math, XMLIntf, XMLDoc, WinApi.Windows;
 
 type
 
@@ -75,6 +75,9 @@ procedure SaveGraph(var G: TGraph; VerFileName, ArcFileName: String);
 // Подпрограмма экспорта графа из экселя
 procedure ImportFromExcel(var G: TGraph; FileName: String;
   Width, Height: Integer);
+
+// TODO: Написать экспорт в Svg
+procedure ExportToSvg(var G: TGraph; FileName: String);
 
 { Функция вычисления расстояния между двумя точками в пикселях }
 function Distance(const p1, p2: TPoint): Integer;

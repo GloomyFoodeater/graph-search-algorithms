@@ -13,7 +13,6 @@ type
     btnOK: TButton;
     btnCancel: TButton;
     procedure btnOKClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
   public
     Weight: Integer;
   end;
@@ -31,15 +30,18 @@ var
   ErrCode: Integer;
 begin
   Val(leWeight.Text, Weight, ErrCode);
-  if (ErrCode <> 0) or (Weight <= 0) then
+  if (ErrCode <> 0) or (Weight <= 0) or cbUnweighted.Checked then
     Weight := 1;
 
   leWeight.Text := '';
+  cbUnweighted.Checked := false;
+  cbEdge.Checked := false;
 end;
 
-procedure TfmArcInput.FormCreate(Sender: TObject);
+procedure TfmArcInput.cbUnweightedClick(Sender: TObject);
 begin
-  Weight := 1;
+  with leWeight do
+    Enabled := not Enabled;
 end;
 
 end.

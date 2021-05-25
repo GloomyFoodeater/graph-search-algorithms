@@ -52,7 +52,7 @@ begin
     begin
       Push(Path, v);
       Inc(ArcsCount);
-      w := Graph[Parents[v - 1] - 1, v - 1];
+      w := Graph[Parents[v - 1], v];
       if w = INF then
         w := 0;
       Distance := Distance + w;

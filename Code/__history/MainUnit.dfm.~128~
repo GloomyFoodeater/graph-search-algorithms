@@ -180,9 +180,9 @@ object fmEditor: TfmEditor
     object lbResults: TLabel
       AlignWithMargins = True
       Left = 12
-      Top = 568
+      Top = 656
       Width = 240
-      Height = 115
+      Height = 27
       Margins.Left = 10
       Margins.Right = 10
       Margins.Bottom = 5
@@ -193,6 +193,8 @@ object fmEditor: TfmEditor
       Font.Name = 'Times New Roman'
       Font.Style = []
       ParentFont = False
+      ExplicitTop = 608
+      ExplicitWidth = 6
     end
     object cbNoWeight: TCheckBox
       Left = 48

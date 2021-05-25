@@ -8,6 +8,8 @@ procedure Visit(var G: TGraph; var Path: TStack);
 
 procedure MakePassive(var G: TGraph);
 
+procedure MakeRegularPolygon(var G: TGraph; Width, Height: Integer);
+
 procedure RedrawGraph(const Canvas: TCanvas; Width, Height: Integer;
   const G: TGraph);
 
@@ -103,10 +105,7 @@ begin
       Font.Color := clTeal;
     end
     else
-    begin
       Pen.Color := clBlack;
-      Font.Color := clBlack;
-    end;
     GetArcPoints(SrcCenter, DstCenter, R, Points);
 
     // Рисование дуги и веса
@@ -171,6 +170,28 @@ begin
     Vertice := Vertice.Next;
   end;
   G.isPainted := false;
+end;
+
+procedure MakeRegularPolygon;
+var
+  Angle: Real;
+  R: Integer;
+  Vertice: TPVertice;
+  O: TPoint;
+begin
+  R := Min(Width, Height) div 2 - G.R;
+  O.x := Width div 2;
+  O.y := Height div 2;
+  Angle := 0;
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+    Vertice.Center.x := O.x + trunc(R * sin(Angle));
+    Vertice.Center.y := O.y - trunc(R * cos(Angle));
+    Angle := Angle + 2 * pi / G.Order;
+    Vertice := Vertice.Next;
+  end;
+
 end;
 
 procedure RedrawGraph;

@@ -29,7 +29,10 @@ object fmEditor: TfmEditor
     OnMouseMove = pbCanvasMouseMove
     OnMouseUp = pbCanvasMouseUp
     OnPaint = pbCanvasPaint
-    ExplicitLeft = -1
+    ExplicitLeft = 472
+    ExplicitTop = 112
+    ExplicitWidth = 105
+    ExplicitHeight = 105
   end
   object plFunctionsContainer: TPanel
     Left = 1112
@@ -180,19 +183,22 @@ object fmEditor: TfmEditor
     object lbResults: TLabel
       AlignWithMargins = True
       Left = 12
-      Top = 568
+      Top = 662
       Width = 240
-      Height = 115
+      Height = 21
       Margins.Left = 10
       Margins.Right = 10
       Margins.Bottom = 5
       Align = alBottom
+      Caption = 'jksdfjkdfskjdfskjdjskdfjkdjks'
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
-      Font.Height = -24
+      Font.Height = -19
       Font.Name = 'Times New Roman'
       Font.Style = []
       ParentFont = False
+      ExplicitTop = 640
+      ExplicitWidth = 215
     end
     object cbNoWeight: TCheckBox
       Left = 48

@@ -13,7 +13,6 @@ type
     btnOK: TButton;
     btnCancel: TButton;
     procedure btnOKClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
   public
     Weight: Integer;
   end;
@@ -35,11 +34,6 @@ begin
     Weight := 1;
 
   leWeight.Text := '';
-end;
-
-procedure TfmArcInput.FormCreate(Sender: TObject);
-begin
-  Weight := 1;
 end;
 
 end.

@@ -180,9 +180,9 @@ object fmEditor: TfmEditor
     object lbResults: TLabel
       AlignWithMargins = True
       Left = 12
-      Top = 568
+      Top = 600
       Width = 240
-      Height = 115
+      Height = 83
       Margins.Left = 10
       Margins.Right = 10
       Margins.Bottom = 5

@@ -29,7 +29,10 @@ object fmEditor: TfmEditor
     OnMouseMove = pbCanvasMouseMove
     OnMouseUp = pbCanvasMouseUp
     OnPaint = pbCanvasPaint
-    ExplicitLeft = -1
+    ExplicitLeft = 472
+    ExplicitTop = 112
+    ExplicitWidth = 105
+    ExplicitHeight = 105
   end
   object plFunctionsContainer: TPanel
     Left = 1112
@@ -41,78 +44,54 @@ object fmEditor: TfmEditor
     BorderWidth = 1
     TabOrder = 0
     object btnAddNode: TSpeedButton
-      Left = 64
-      Top = 48
-      Width = 144
-      Height = 33
+      Left = 96
+      Top = 56
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
-      Font.Charset = RUSSIAN_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
       OnClick = SetClickState
     end
     object btnAddLinl: TSpeedButton
       Tag = 1
-      Left = 64
-      Top = 96
-      Width = 145
-      Height = 33
+      Left = 96
+      Top = 104
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1076#1091#1075#1091
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
       OnClick = SetClickState
     end
     object btnDeleteNode: TSpeedButton
       Tag = 2
-      Left = 64
+      Left = 96
       Top = 152
-      Width = 145
-      Height = 33
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
       OnClick = SetClickState
     end
     object btnDeleteLink: TSpeedButton
       Tag = 3
-      Left = 64
-      Top = 209
-      Width = 145
-      Height = 33
+      Left = 96
+      Top = 200
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1076#1091#1075#1091
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
       OnClick = SetClickState
     end
     object btnDFS: TSpeedButton
       Tag = 5
-      Left = 64
-      Top = 400
-      Width = 145
-      Height = 33
+      Left = 96
+      Top = 384
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1074' '#1075#1083#1091#1073#1080#1085#1091
@@ -120,10 +99,10 @@ object fmEditor: TfmEditor
     end
     object btnBFS: TSpeedButton
       Tag = 6
-      Left = 64
-      Top = 465
-      Width = 145
-      Height = 33
+      Left = 24
+      Top = 440
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1074' '#1096#1080#1088#1080#1085#1091
@@ -131,82 +110,74 @@ object fmEditor: TfmEditor
     end
     object btnDijkstra: TSpeedButton
       Tag = 7
-      Left = 64
-      Top = 529
-      Width = 145
-      Height = 33
+      Left = 24
+      Top = 488
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1044#1077#1081#1082#1089#1090#1088#1099
       OnClick = SetClickState
     end
     object lbEdit: TLabel
-      Left = 30
+      Left = 78
       Top = 18
-      Width = 206
-      Height = 24
+      Width = 170
+      Height = 16
       Caption = #1048#1079#1084#1077#1085#1077#1085#1080#1077' '#1101#1083#1077#1084#1077#1085#1090#1086#1074
-      Font.Charset = RUSSIAN_CHARSET
+      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Times New Roman'
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
       ParentFont = False
     end
     object lbSearch: TLabel
-      Left = 46
-      Top = 362
-      Width = 182
-      Height = 24
+      Left = 86
+      Top = 354
+      Width = 138
+      Height = 16
       Caption = #1040#1083#1075#1086#1088#1080#1090#1084#1099' '#1087#1086#1080#1089#1082#1072
-      Font.Charset = RUSSIAN_CHARSET
+      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -21
-      Font.Name = 'Times New Roman'
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
       ParentFont = False
     end
     object sbMove: TSpeedButton
       Tag = 4
-      Left = 64
-      Top = 266
-      Width = 145
-      Height = 33
+      Left = 96
+      Top = 256
+      Width = 128
+      Height = 30
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1077#1088#1077#1084#1077#1097#1072#1090#1100
       OnClick = SetClickState
     end
     object lbResults: TLabel
-      AlignWithMargins = True
-      Left = 12
-      Top = 568
-      Width = 240
-      Height = 115
-      Margins.Left = 10
-      Margins.Right = 10
-      Margins.Bottom = 5
+      Left = 2
+      Top = 616
+      Width = 260
+      Height = 72
       Align = alBottom
-      Font.Charset = RUSSIAN_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -24
-      Font.Name = 'Times New Roman'
-      Font.Style = []
-      ParentFont = False
-    end
-    object cbNoWeight: TCheckBox
-      Left = 48
-      Top = 313
-      Width = 185
-      Height = 25
-      Caption = #1053#1077#1074#1079#1074#1077#1096#1077#1085#1085#1099#1077' '#1076#1091#1075#1080
-      Checked = True
+      Caption = 'jksdfjkdfskjdfskjdjskdfjkdjks'
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
       Font.Height = -19
       Font.Name = 'Times New Roman'
       Font.Style = []
       ParentFont = False
+      ExplicitWidth = 176
+    end
+    object cbNoWeight: TCheckBox
+      Left = 24
+      Top = 552
+      Width = 137
+      Height = 17
+      Caption = #1058#1086#1083#1100#1082#1086' '#1085#1077#1074#1079#1074#1077#1096#1077#1085#1085#1099#1077
+      Checked = True
       State = cbChecked
       TabOrder = 0
       OnClick = cbNoWeightClick
@@ -249,9 +220,6 @@ object fmEditor: TfmEditor
       object nExportBMP: TMenuItem
         Caption = #1069#1082#1089#1087#1086#1088#1090' '#1074' BMP'
         OnClick = nExportBMPClick
-      end
-      object N2: TMenuItem
-        Caption = '-'
       end
       object nClear: TMenuItem
         Caption = #1054#1095#1080#1089#1090#1080#1090#1100

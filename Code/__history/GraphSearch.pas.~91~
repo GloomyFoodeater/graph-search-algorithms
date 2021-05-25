@@ -38,7 +38,7 @@ const
 procedure RestorePath(const Graph: TWeights; const Parents: array of Integer;
   const Src, Dest: Integer; out Info: TSearchInfo);
 var
-  v, w: Integer;
+  v: Integer;
 begin
 
   with Info do
@@ -52,10 +52,7 @@ begin
     begin
       Push(Path, v);
       Inc(ArcsCount);
-      w := Graph[Parents[v - 1] - 1, v - 1];
-      if w = INF then
-        w := 0;
-      Distance := Distance + w;
+      Distance := Distance + Graph[v, Parents[v - 1]];
       v := Parents[v - 1];
     end; // Конец А1
 

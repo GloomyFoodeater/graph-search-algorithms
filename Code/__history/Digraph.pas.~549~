@@ -3,7 +3,7 @@ unit Digraph;
 interface
 
 uses System.Types, DynStructures, System.SysUtils, ComObj, Variants, ActiveX,
-  Math;
+  Math, XMLIntf, XMLDoc;
 
 type
 
@@ -75,6 +75,9 @@ procedure SaveGraph(var G: TGraph; VerFileName, ArcFileName: String);
 // Подпрограмма экспорта графа из экселя
 procedure ImportFromExcel(var G: TGraph; FileName: String;
   Width, Height: Integer);
+
+// TODO: Написать экспорт в Svg
+procedure ExportToSvg(var G: TGraph; FileName: String);
 
 { Функция вычисления расстояния между двумя точками в пикселях }
 function Distance(const p1, p2: TPoint): Integer;
@@ -480,6 +483,44 @@ begin
       CoUninitialize;
     end;
   end;
+end;
+
+procedure ExportToSvg(var G: TGraph; FileName: String);
+var
+  Document: IXMLDocument;
+  Root, Node: IXMLNode;
+  Vertice: TPVertice;
+  Neighbour: TPNeighbour;
+begin
+  Document := TXMLDocument.Create(nil);
+  Document.Active := True;
+
+  Root := Document.AddChild('svg');
+  Root.Attributes['xmlns'] := 'http://www.w3.org/2000/svg';
+
+  Vertice := G.Head;
+  while Vertice <> nil do
+  begin
+    Node := Root.AddChild('circle');
+    Node.Attributes['xmlns'] := 'http://www.w3.org/2000/svg';
+    Node.Attributes['cx'] := IntToStr(Vertice.Center.X);
+    Node.Attributes['cy'] := IntToStr(Vertice.Center.Y);
+    Node.Attributes['r'] := IntToStr(G.R);
+    Node.Attributes['stroke'] := 'black';
+    Node.Attributes['stroke-width'] := 3;
+    Node.Attributes['fill'] := 'white';
+    Vertice := Vertice.Next;
+  end;
+
+  // Node := Root.AddChild('line');
+  // Node.Attributes['xmlns'] := 'http://www.w3.org/2000/svg';
+  // Node.Attributes['x1'] := '50';
+  // Node.Attributes['y1'] := '50';
+  // Node.Attributes['x2'] := '100';
+  // Node.Attributes['y2'] := '100';
+  // Node.Attributes['stroke'] := 'black';
+
+  Document.SaveToFile(FileName);
 end;
 
 function Distance;

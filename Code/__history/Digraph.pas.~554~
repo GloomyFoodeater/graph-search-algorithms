@@ -3,7 +3,7 @@ unit Digraph;
 interface
 
 uses System.Types, DynStructures, System.SysUtils, ComObj, Variants, ActiveX,
-  Math;
+  Math, XMLIntf, XMLDoc, WinApi.Windows;
 
 type
 

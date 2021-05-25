@@ -80,6 +80,7 @@ begin
     Str(Vertice.Number, SNumber);
     XMid := x - TextWidth(SNumber) div 2;
     YMid := y - TextHeight(SNumber) div 2;
+
     Ellipse(x - R, y - R, x + R, y + R);
     TextOut(XMid, YMid, SNumber);
   end;
@@ -98,29 +99,20 @@ begin
 
     // Инициализация данных для рисования
     if Neighbour.isVisited then
-    begin
-      Pen.Color := clTeal;
-      Font.Color := clTeal;
-    end
+      Pen.Color := clTeal
     else
-    begin
       Pen.Color := clBlack;
-      Font.Color := clBlack;
-    end;
     GetArcPoints(SrcCenter, DstCenter, R, Points);
+    Str(Neighbour.Weight, SWeight);
+    WText := TextWidth(SWeight);
+    HText := TextHeight(SWeight);
+    XMid := (Points[1].x + Points[2].x - WText) div 2;
+    YMid := (Points[1].y + Points[2].y - HText) div 2;
 
     // Рисование дуги и веса
     Polyline(Points);
-    if Neighbour.Weight <> 1 then
-    begin
-      Str(Neighbour.Weight, SWeight);
-      WText := TextWidth(SWeight);
-      HText := TextHeight(SWeight);
-      XMid := (Points[1].x + Points[2].x - WText) div 2;
-      YMid := (Points[1].y + Points[2].y - HText) div 2;
-      Rectangle(XMid, YMid, XMid + WText + 1, YMid + HText + 1);
-      TextOut(XMid, YMid, SWeight);
-    end;
+    Rectangle(XMid, YMid, XMid + WText + 1, YMid + HText + 1);
+    TextOut(XMid, YMid, SWeight);
   end;
 
 end;

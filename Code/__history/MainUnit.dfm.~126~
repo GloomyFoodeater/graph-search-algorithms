@@ -29,7 +29,10 @@ object fmEditor: TfmEditor
     OnMouseMove = pbCanvasMouseMove
     OnMouseUp = pbCanvasMouseUp
     OnPaint = pbCanvasPaint
-    ExplicitLeft = -1
+    ExplicitLeft = 472
+    ExplicitTop = 112
+    ExplicitWidth = 105
+    ExplicitHeight = 105
   end
   object plFunctionsContainer: TPanel
     Left = 1112
@@ -50,8 +53,8 @@ object fmEditor: TfmEditor
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
+      Font.Height = -16
+      Font.Name = 'Times New Roman'
       Font.Style = []
       ParentFont = False
       OnClick = SetClickState
@@ -67,7 +70,7 @@ object fmEditor: TfmEditor
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1076#1091#1075#1091
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
+      Font.Height = -16
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
@@ -84,7 +87,7 @@ object fmEditor: TfmEditor
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1074#1077#1088#1096#1080#1085#1091
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
+      Font.Height = -16
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
@@ -101,7 +104,7 @@ object fmEditor: TfmEditor
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1076#1091#1075#1091
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
+      Font.Height = -16
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
@@ -180,16 +183,17 @@ object fmEditor: TfmEditor
     object lbResults: TLabel
       AlignWithMargins = True
       Left = 12
-      Top = 568
+      Top = 640
       Width = 240
-      Height = 115
+      Height = 43
       Margins.Left = 10
       Margins.Right = 10
       Margins.Bottom = 5
       Align = alBottom
+      Caption = 'jksdfjkdfskjdfskjdjskdfjkdjks'
       Font.Charset = RUSSIAN_CHARSET
       Font.Color = clWindowText
-      Font.Height = -24
+      Font.Height = -19
       Font.Name = 'Times New Roman'
       Font.Style = []
       ParentFont = False

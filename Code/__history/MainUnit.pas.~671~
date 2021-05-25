@@ -354,7 +354,7 @@ begin
   begin
     Visit(Graph, Info.Path);
     lbResults.Caption := 'Информация о поиске'#13#10;
-    lbResults.Caption := lbResults.Caption + 'Число дуг: ' +
+    lbResults.Caption := lbResults.Caption + 'Количество дуг: ' +
       IntToStr(Info.ArcsCount) + #13#10;
     lbResults.Caption := lbResults.Caption + 'Длина: ' +
       IntToStr(Info.Distance);

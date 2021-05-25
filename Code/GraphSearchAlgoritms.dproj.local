@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.407,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\GraphDrawing.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.573,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.391,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.916,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.517,D:\Учёба\ОАиП\Graph-search-algorithms\Code\ArcInputUnit.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.808,D:\Учёба\ОАиП\Graph-search-algorithms\Code\DynStructures.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.441,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.309,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.793,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\GraphSearch.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.494,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutUnit.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.683,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Digraph.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.715,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.494,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutUnit.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.069,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.715,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.036,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.715,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.dfm</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.517,D:\Учёба\ОАиП\Graph-search-algorithms\Code\ArcInputUnit.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.069,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.715,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.793,D:\Учёба\ОАиП\Graph-search-algorithms\Code\GraphSearch.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.494,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutUnit.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.494,D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutForm.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\AboutUnit.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.517,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.dfm=D:\Учёба\ОАиП\Graph-search-algorithms\Code\ArcInputUnit.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.683,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Digraph.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.309,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.916,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.391,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.407,D:\Учёба\ОАиП\Graph-search-algorithms\Code\GraphDrawing.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.573,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.441,=D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.808,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\DynStructures.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.517,D:\Учёба\ОАиП\Graph-search-algorithms\Code\Unit1.pas=D:\Учёба\ОАиП\Graph-search-algorithms\Code\ArcInputUnit.pas</Transaction>
   </Transactions>
 </BorlandProject>

@@ -103,10 +103,7 @@ begin
       Font.Color := clTeal;
     end
     else
-    begin
       Pen.Color := clBlack;
-      Font.Color := clBlack;
-    end;
     GetArcPoints(SrcCenter, DstCenter, R, Points);
 
     // Рисование дуги и веса

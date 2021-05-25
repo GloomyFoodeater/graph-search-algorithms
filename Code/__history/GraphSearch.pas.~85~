@@ -7,7 +7,6 @@ uses Digraph, DynStructures;
 type
   // Тип матрицы весов
   TWeights = array of array of Integer;
-
   TSearchInfo = record
     Distance: Integer;
     ArcsCount: Integer;
@@ -23,11 +22,11 @@ procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
 
 { Процедура поиска в ширину }
 procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+   out Info: TSearchInfo);
 
 { Процедура поиска алгоритмом Дейкстры }
 procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+   out Info: TSearchInfo);
 
 implementation
 
@@ -35,41 +34,31 @@ const
   INF = 1000000000;
 
   { Процедура восстановления пути по массиву предков }
-procedure RestorePath(const Graph: TWeights; const Parents: array of Integer;
-  const Src, Dest: Integer; out Info: TSearchInfo);
+procedure RestorePath(const Parents: array of Integer; const Src, Dest: Integer;
+  out Path: TStack);
 var
-  v, w: Integer;
+  v: Integer;
 begin
 
-  with Info do
+  InitializeStack(Path); // Инициализация стека
+  v := Dest; // Сохранение конца пути
+
+  // Цикл А1. Добавление очередного предка в пути
+  while (v <> Src) and (v <> 0) do
   begin
-    InitializeStack(Path); // Инициализация стека
-    v := Dest; // Сохранение конца пути
-    ArcsCount := 0;
-    Distance := 0;
-    // Цикл А1. Добавление очередного предка в пути
-    while (v <> Src) and (v <> 0) do
-    begin
-      Push(Path, v);
-      Inc(ArcsCount);
-      w := Graph[Parents[v - 1] - 1, v - 1];
-      if w = INF then
-        w := 0;
-      Distance := Distance + w;
-      v := Parents[v - 1];
-    end; // Конец А1
-
     Push(Path, v);
+    v := Parents[v - 1];
+  end; // Конец А1
 
-    // Случай, если путь не был найден
-    if v = 0 then
-      DestroyList(Path);
-  end;
+  Push(Path, v);
 
+  // Случай, если путь не был найден
+  if v = 0 then
+    DestroyList(Path);
 end;
 
 procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+   out Info: TSearchInfo);
 var
   v, u: Integer;
   Order: Integer;
@@ -120,11 +109,11 @@ begin
   end; // Конец А1
 
   // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
+  RestorePath(Parents, Src, Dest, Info.Path);
 end;
 
 procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+   out Info: TSearchInfo);
 var
   v, u: Integer;
   Order: Integer;
@@ -172,12 +161,12 @@ begin
   end; // Конец А1
 
   // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
+  RestorePath(Parents, Src, Dest, Info.Path);
 
 end;
 
 procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+   out Info: TSearchInfo);
 var
   v, u: Integer;
   Order: Integer;
@@ -247,7 +236,7 @@ begin
   end; // Конец А1
 
   // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
+  RestorePath(Parents, Src, Dest, Info.Path);
 
 end;
 

@@ -46,8 +46,6 @@ type
     cbNoWeight: TCheckBox;
     nImportExcel: TMenuItem;
     odImport: TOpenDialog;
-    lbResults: TLabel;
-    N2: TMenuItem;
     procedure fmEditorCreate(Sender: TObject);
     procedure fmEditorClose(Sender: TObject; var Action: TCloseAction);
     procedure SetClickState(Sender: TObject);
@@ -100,7 +98,6 @@ begin
   if Graph.isPainted then
   begin
     MakePassive(Graph);
-    lbResults.Caption := '';
     pbCanvas.Invalidate;
   end
   else if VStart <> nil then
@@ -125,10 +122,7 @@ begin
 
   Pos := ScreenToClient(Mouse.CursorPos);
   if Graph.isPainted then
-  begin
     MakePassive(Graph);
-    lbResults.Caption := '';
-  end;
   // Перебор переменной состояния
   case State of
     stAddVertice: // Добавление вершины
@@ -350,17 +344,10 @@ begin
   end;
 
   // Результат о достижимости конечной вершины
-  if Info.Path <> nil then
-  begin
-    Visit(Graph, Info.Path);
-    lbResults.Caption := 'Информация о поиске'#13#10;
-    lbResults.Caption := lbResults.Caption + 'Число дуг: ' +
-      IntToStr(Info.ArcsCount) + #13#10;
-    lbResults.Caption := lbResults.Caption + 'Длина: ' +
-      IntToStr(Info.Distance);
-  end
+  if Info.Path = nil then
+    ShowMessage('Путь не найден.')
   else
-    ShowMessage('Путь не найден.');
+    Visit(Graph, Info.Path);
 
 end;
 
