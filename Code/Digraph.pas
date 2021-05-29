@@ -2,15 +2,15 @@ unit Digraph;
 
 interface
 
-uses System.Types, DynStructures, System.SysUtils, ComObj, Variants, ActiveX,
-  Math;
+uses System.Types, System.SysUtils, Math, ComObj, Variants,
+  ActiveX;
 
 type
 
-  // Тип перечисления стиля вершин
-  TDesign = (dgPassive, dgActive, dgVisited);
+  // Тип стиля раскраски вершины
+  TVerticeStyle = (stPassive, stActive, stVisited);
 
-  // Тип списка смежности
+  // Тип списка смежности графа
   TPNeighbour = ^TNeighbour;
 
   TNeighbour = record
@@ -24,15 +24,15 @@ type
   TPVertice = ^TVertice;
 
   TVertice = record
-    Center: TPoint;
     Number: Integer;
+    Center: TPoint;
+    OutDeg: Integer;
+    Style: TVerticeStyle;
     Head: TPNeighbour;
     Next: TPVertice;
-    Deg: Integer;
-    Design: TDesign;
   end;
 
-  // Тип ориентированный граф
+  // Тип ориентированного графа
   TGraph = record
     Head: TPVertice;
     Tail: TPVertice;
@@ -41,360 +41,412 @@ type
     R: Integer;
   end;
 
-  { Процедура инициализации графа }
-procedure InitializeGraph(var G: TGraph);
+  // Подпрограмма инициализации графа
+procedure InitializeGraph(var Graph: TGraph);
 
-{ Процедура очищения графа }
-procedure DestroyGraph(var G: TGraph);
+// Подпрограмма удаления графа
+procedure DestroyGraph(var Graph: TGraph);
 
-{ Процедура добавления вершины в граф }
-procedure AddVertice(var G: TGraph; const C: TPoint);
+// Подпрограмма добавления вершины в граф
+procedure AddVertice(var Graph: TGraph; C: TPoint);
 
-{ Процедура добавления дуги в граф }
-procedure AddArc(var G: TGraph; v, u: Integer; w: Integer);
+// Подпрограмма добавления дуги в граф
+procedure AddArc(var Graph: TGraph; v, u, w: Integer);
 
-{ Процедура удаления вершины из графа }
-procedure DeleteVertice(var G: TGraph; v: Integer);
+// Подпрограмма удаления вершины из графа
+procedure DeleteVertice(var Graph: TGraph; v: Integer);
 
-{ Процедура удаления дуги из графа }
-procedure DeleteArc(var G: TGraph; v, u: Integer);
+// Подпрограмма удаления дуги из графа
+procedure DeleteArc(var Graph: TGraph; v, u: Integer);
 
-{ Процедура получения вершины по номеру }
-procedure GetByNumber(const G: TGraph; v: Integer; out Vertice: TPVertice);
+// Подпрограмма получения вершины по её номеру
+function GetByNumber(const Graph: TGraph; v: Integer): TPVertice;
 
-{ Процедура нахождения вершины по точке на холсте }
-function Centralize(const G: TGraph; const P: TPoint;
-  out Vertice: TPVertice): Boolean;
+// Подпрограмма получения вершины по точке на холсте
+function GetByPoint(const Graph: TGraph; P: TPoint): TPVertice;
 
 // Подпрограмма открытия графа из типизированных файлов
-procedure OpenGraph(var G: TGraph; VerFileName, ArcFileName: String);
+procedure OpenGraph(var Graph: TGraph; VerFileName, ArcFileName: String);
 
-// Подпрограмма сохранения графа в типизированный файл
-procedure SaveGraph(var G: TGraph; VerFileName, ArcFileName: String);
+// Подпрограмма сохранения графа в типизированные файлы
+procedure SaveGraph(const Graph: TGraph; VerFileName, ArcFileName: String);
 
 // Подпрограмма экспорта графа из экселя
-procedure ImportFromExcel(var G: TGraph; FileName: String;
-  Width, Height: Integer);
-
-{ Функция вычисления расстояния между двумя точками в пикселях }
-function Distance(const p1, p2: TPoint): Integer;
+procedure ImportGraph(var Graph: TGraph; ExcelFileName: String);
 
 implementation
-
-function AreAdjacent(const G: TGraph; Vertice: TPVertice; u: Integer): Boolean;
-var
-  Neighbour: TPNeighbour;
-begin
-  Result := false;
-
-  if Vertice <> nil then
-    Neighbour := Vertice.Head
-  else
-    Neighbour := nil;
-
-  while not Result and (Neighbour <> nil) do
-  begin
-    Result := Neighbour.Number = u;
-    Neighbour := Neighbour.Next;
-  end;
-
-end;
 
 procedure DestroyAdjList(var Head: TPNeighbour);
 var
   Neighbour: TPNeighbour;
+  // Neighbour - Ссылка на удаляемого соседа
+
 begin
+
+  // Цикл А1. Проход по списку смежности
   while Head <> nil do
   begin
     Neighbour := Head;
     Head := Head.Next;
     Dispose(Neighbour);
-  end;
-  Head := nil;
+  end; // Конец А1
 end;
 
-procedure AddVertice;
+procedure InitializeGraph(var Graph: TGraph);
+begin
+  with Graph do
+  begin
+    Head := nil;
+    Tail := nil;
+    Order := 0;
+    isPainted := false;
+    R := 40;
+  end;
+end;
+
+procedure DestroyGraph(var Graph: TGraph);
 var
   Vertice: TPVertice;
+  // Vertice - Ссылка на удаляемую вершину
+
 begin
-  Inc(G.Order);
+
+  // Цикл А1. Проход по списку вершин
+  while Graph.Head <> nil do
+  begin
+    Vertice := Graph.Head;
+    DestroyAdjList(Vertice.Head);
+    Graph.Head := Graph.Head.Next;
+    Dispose(Vertice);
+  end; // Конец А1
+end;
+
+// Подпрограмма проверки смежности вершин
+function IsNeighbour(const Graph: TGraph; Vertice: TPVertice;
+  u: Integer): Boolean;
+var
+  Neighbour: TPNeighbour;
+  // Neighbour - Ссылка на сосед с номером u
+
+begin
+  Result := false;
+
+  // AddArc может передать nil во время чтения/импорта из файла
+  if Vertice <> nil then
+    Neighbour := Vertice.Head
+  else
+    Neighbour := nil;
+
+  // Цикл А1. Проход по списку смежности
+  while not Result and (Neighbour <> nil) do
+  begin
+    Result := Neighbour.Number = u;
+    Neighbour := Neighbour.Next;
+  end; // Конец А1
+
+end;
+
+procedure AddVertice(var Graph: TGraph; C: TPoint);
+var
+  Vertice: TPVertice;
+  // Vertice - Ссылка на добавляемую вершину
+
+begin
+  Inc(Graph.Order); // Увеличение порядка
 
   // Инициализация новой вершины
   New(Vertice);
   with Vertice^ do
   begin
     Center := C;
-    Number := G.Order;
+    Number := Graph.Order;
     Head := nil;
     Next := nil;
-    Deg := 0;
-    Design := dgPassive;
+    OutDeg := 0;
+    Style := stPassive;
   end;
 
   // Запись новой вершины
-  if G.Head = nil then
-    G.Head := Vertice
+  if Graph.Head = nil then
+    Graph.Head := Vertice
   else
-    G.Tail.Next := Vertice;
-  G.Tail := Vertice;
+    Graph.Tail.Next := Vertice;
+  Graph.Tail := Vertice;
 
 end;
 
-procedure AddArc;
+procedure AddArc(var Graph: TGraph; v, u, w: Integer);
 var
   Vertice, AdjVertice: TPVertice;
   Neighbour: TPNeighbour;
   isIncorrect: Boolean;
+  // Vertice - Ссылка на вершину v
+  // AdjVertice - Ссылка на вершину u
+  // Neighbour - Ссылка на добавляемого соседа
+  // isIncorrect - Флаг об отсутствии кратных дуг и петель
+
 begin
 
-  GetByNumber(G, v, Vertice);
-  GetByNumber(G, u, AdjVertice);
+  // Получение ссылок на вершины v и u
+  Vertice := GetByNumber(Graph, v);
+  AdjVertice := GetByNumber(Graph, u);
 
-  isIncorrect := AreAdjacent(G, Vertice, u) or AreAdjacent(G, AdjVertice, v);
+  // Проверка корректности графа в случае добавления дуги
+  isIncorrect := (v = u) or IsNeighbour(Graph, Vertice, u) or
+    IsNeighbour(Graph, AdjVertice, v);
   if not isIncorrect then
   begin
 
-    Inc(Vertice.Deg);
+    Inc(Vertice.OutDeg);
 
-    // Сохранение соседа в список смежности
+    // Добавление соседа в список смежности
     New(Neighbour);
-    Neighbour.Number := u;
-    Neighbour.Weight := w;
-    Neighbour.isVisited := false;
-    Neighbour.Next := Vertice.Head;
+    with Neighbour^ do
+    begin
+      Number := u;
+      Weight := w;
+      isVisited := false;
+      Next := Vertice.Head;
+    end;
     Vertice.Head := Neighbour;
-
   end;
 end;
 
-procedure DeleteVertice;
+procedure DeleteVertice(var Graph: TGraph; v: Integer);
 var
-  PrevVertice, Vertice: TPVertice;
-  PrevAdjVertice, Neighbour: TPNeighbour;
-begin
-  Dec(G.Order);
+  Vertice, PrVertice: TPVertice;
+  Neighbour, PrNeighbour: TPNeighbour;
+  Exists: Boolean;
+  // Vertice - Ссылка на текущего вершину
+  // PrVertice - Ссылка на вершину перед Vertice
+  // Neighbour - Ссылка на текущего соседа
+  // PrNeighbour - Ссылка на соседа перед Neighbour
+  // Exists - Флаг о наличии вершины
 
-  if v = G.Head.Number then
+begin
+
+  // Удаление вершины
+  if v <> Graph.Head.Number then
   begin
-    // Удаление головной вершины
-    Vertice := G.Head;
-    G.Head := G.Head.Next;
+    PrVertice := GetByNumber(Graph, v - 1);
+    Exists := (PrVertice <> nil) and (PrVertice.Next <> nil);
+    if Exists then
+    begin
+      Vertice := PrVertice.Next;
+      PrVertice.Next := Vertice.Next;
+    end;
   end
   else
   begin
-    // Удаление не головной вершины
-    GetByNumber(G, v - 1, PrevVertice);
-    Vertice := PrevVertice.Next;
-    PrevVertice.Next := Vertice.Next;
+
+    // Удаляется голова списка
+    Vertice := Graph.Head;
+    Graph.Head := Vertice.Next;
+    Exists := true;
   end;
 
-  // Освобождение памяти
-  DestroyAdjList(Vertice.Head);
-  Dispose(Vertice);
+  if Exists then
+  begin
+    Dec(Graph.Order);
 
-  // Цикл А1. Проход по вершинам графа
-  Vertice := G.Head;
-  while Vertice <> nil do
+    // Освобождение памяти
+    DestroyAdjList(Vertice.Head);
+    Dispose(Vertice);
+
+    // Цикл А1. Проход по вершинам графа
+    Vertice := Graph.Head;
+    while Vertice <> nil do
+    begin
+
+      // Уменьшение номеров вершин
+      if Vertice.Number > v then
+        Dec(Vertice.Number);
+
+      // Изменение хвоста списка вершин
+      if Vertice.Next = nil then
+        Graph.Tail := Vertice;
+
+      // Цикл А2. Проход по соседям вершины
+      PrNeighbour := nil;
+      Neighbour := Vertice.Head;
+      while Neighbour <> nil do
+      begin
+
+        // Удаление соседа текущей вершины
+        if Neighbour.Number = v then
+        begin
+          if PrNeighbour = nil then
+            Vertice.Head := Neighbour.Next
+          else
+            PrNeighbour.Next := Neighbour.Next;
+          Dispose(Neighbour);
+        end
+        else if Neighbour.Number > v then
+          Dec(Neighbour.Number); // Уменьшение номера соседа
+
+        // Переход к следующему соседу
+        PrNeighbour := Neighbour;
+        Neighbour := Neighbour.Next;
+      end; // Конец А2
+
+      // Переход к следующей вершине
+      Vertice := Vertice.Next;
+    end; // Конец А1
+  end; // Конец if
+end;
+
+procedure DeleteArc(var Graph: TGraph; v, u: Integer);
+var
+  Vertice: TPVertice;
+  Neighbour, PrNeighbour: TPNeighbour;
+  Exists: Boolean;
+  // Vertice - Ссылка на вершину-начало дуги
+  // Neighbour - Ссылка на искомый для удаления сосед
+  // PrNeighbour - Ссылка на соседа перед Neighbour
+  // Exists - Флаг о наличии дуги
+
+begin
+
+  // Получение начала дуги
+  Vertice := GetByNumber(Graph, v);
+
+  Exists := IsNeighbour(Graph, Vertice, u);
+  if Exists then
   begin
 
-    // Уменьшение номеров вершин
-    if Vertice.Number > v then
-      Dec(Vertice.Number);
-
-    // Изменение хвоста списка
-    if Vertice.Next = nil then
-      G.Tail := Vertice;
-
-    // Цикл А2. Проход по соседям вершины
-    PrevAdjVertice := nil;
+    // Цикл А1. Проход по списку смежности
+    PrNeighbour := nil;
     Neighbour := Vertice.Head;
     while Neighbour <> nil do
     begin
 
-      // Удаление соседа текущей вершины
-      if Neighbour.Number = v then
+      // Сравнение номеров текущего и удаляемого соседа
+      if u = Neighbour.Number then
       begin
-        if PrevAdjVertice = nil then
+        Dec(Vertice.OutDeg);
+
+        // Удаление соседа из списка смежности
+        if u = Vertice.Head.Number then
           Vertice.Head := Neighbour.Next
         else
-          PrevAdjVertice.Next := Neighbour.Next;
+          PrNeighbour.Next := Neighbour.Next;
         Dispose(Neighbour);
-      end
-      else if Neighbour.Number > v then
-        Dec(Neighbour.Number); // Уменьшение номера соседа
+        Neighbour := nil;
+      end // Конец if
+      else
+      begin
 
-      PrevAdjVertice := Neighbour;
-      Neighbour := Neighbour.Next;
-    end; // Конец А2
-    Vertice := Vertice.Next;
-  end; // Конец А1
+        // Переход к следующему соседу
+        PrNeighbour := Neighbour;
+        Neighbour := Neighbour.Next;
+      end; // Конец else
+    end; // Конец А1
+  end; // Конец if
 end;
 
-procedure DeleteArc;
+function GetByNumber(const Graph: TGraph; v: Integer): TPVertice;
+begin
+
+  // Цикл А1. Проход по списку вершин
+  Result := Graph.Head;
+  while (Result <> nil) and (Result.Number <> v) do
+    Result := Result.Next;
+end;
+
+function GetByPoint(const Graph: TGraph; P: TPoint): TPVertice;
 var
   Vertice: TPVertice;
-  Neighbour, PrevAdjVertice: TPNeighbour;
-  isFound: Boolean;
+  // Vertice - Ссылка на текущую вершину графа
+
 begin
-
-  // Получение начала дуги
-  GetByNumber(G, v, Vertice);
-
-  if not AreAdjacent(G, Vertice, u) then
-    Exit;
-
-  Dec(Vertice.Deg);
-
-  // Получение первого соседа
-  PrevAdjVertice := Vertice.Head;
-  Neighbour := nil;
-
-  // Поиск звена перед звеном с искомым соседом
-  if (PrevAdjVertice = nil) or (PrevAdjVertice.Number = u) then
-  begin
-    if PrevAdjVertice <> nil then
-      Vertice.Head := PrevAdjVertice.Next
-    else
-      Vertice.Head := nil;
-  end
-  else
-  begin
-
-    isFound := (PrevAdjVertice.Next.Number = u) or (PrevAdjVertice = nil);
-
-    // Получение предыдущего соседа удаляемого
-    while not isFound do
-    begin
-      PrevAdjVertice := PrevAdjVertice.Next;
-      isFound := (PrevAdjVertice = nil) or (PrevAdjVertice.Next.Number = u);
-    end;
-
-    Neighbour := PrevAdjVertice.Next;
-    PrevAdjVertice.Next := Neighbour.Next;
-  end;
-
-  // Удаление соседа
-  if Neighbour <> nil then
-  begin
-    Dispose(Neighbour);
-  end;
-
-end;
-
-procedure InitializeGraph;
-begin
-  G.Head := nil;
-  G.Tail := nil;
-  G.Order := 0;
-  G.isPainted := false;
-  G.R := 40;
-end;
-
-procedure DestroyGraph;
-var
-  Vertice: TPVertice;
-begin
-
-  // Цикл А1. Освобождение списка вершин
-  while G.Head <> nil do
-  begin
-    Vertice := G.Head;
-
-    // Цикл А2. Освобождение списка соседей вершины
-    DestroyAdjList(Vertice.Head);
-
-    G.Head := G.Head.Next;
-    Dispose(Vertice);
-  end; // Конец А1
-end;
-
-procedure GetByNumber;
-begin
-  Vertice := G.Head;
-  while (Vertice <> nil) and (Vertice.Number <> v) do
-    Vertice := Vertice.Next;
-end;
-
-function Centralize;
-var
-  Found: TPVertice;
-begin
-
-  Found := nil;
-  Vertice := G.Head;
 
   // Цикл А1. Поиск последней вершины с близкими координатами
+  Result := nil;
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
-    if Distance(Vertice.Center, P) <= G.R then
-      Found := Vertice;
+
+    // Проверка принадлежности окружности радиуса Graph.R
+    if P.Distance(Vertice.Center) <= Graph.R then
+      Result := Vertice;
     Vertice := Vertice.Next;
   end; // Конец А1
-
-  Result := Found <> nil;
-  Vertice := Found;
-
 end;
 
-procedure OpenGraph;
+procedure OpenGraph(var Graph: TGraph; VerFileName, ArcFileName: String);
 var
-  Vertice: TPVertice;
-  Neighbour: TPNeighbour;
   VerFile: File of TVertice;
   ArcFile: File of TNeighbour;
+  Vertice: TPVertice;
+  Neighbour: TPNeighbour;
   v: Integer;
+  // VerFile - Типизированный файл вершин
+  // ArcFile - Типизированный файл соседей
+  // Vertice - Ссылка на текущую вершину
+  // Neighbour - Ссылка на текущего соседа
+  // v - Параметр цикла по соседям
+
 begin
 
   // Подготовка файлов
-  System.Assign(VerFile, VerFileName);
-  System.Assign(ArcFile, ArcFileName);
+  Assign(VerFile, VerFileName);
+  Assign(ArcFile, ArcFileName);
   Reset(VerFile);
   Reset(ArcFile);
 
-  InitializeGraph(G);
+  // Инициализация графа, указателя на вершину и соседа
+  InitializeGraph(Graph);
   New(Vertice);
   New(Neighbour);
+
   // Цикл А1. Проход по файлу вершин
   while not Eof(VerFile) do
   begin
 
     // Чтение очередной вершины
     Read(VerFile, Vertice^);
-    AddVertice(G, Vertice.Center);
+    AddVertice(Graph, Vertice.Center);
 
-    // Цикл А2. Частичный проход по файлу рёбер
-    for v := 1 to Vertice.Deg do
+    // Цикл А2. Частичный проход по файлу соседей
+    for v := 1 to Vertice.OutDeg do
     begin
+
+      // Чтение очередного соседа
       Read(ArcFile, Neighbour^);
-      AddArc(G, Vertice.Number, Neighbour.Number, Neighbour.Weight);
+      AddArc(Graph, Vertice.Number, Neighbour.Number, Neighbour.Weight);
     end; // Конец А2
   end; // Конец А1
 
+  // Освобождение памяти
   Dispose(Vertice);
   Dispose(Neighbour);
 
   // Закрытие файлов
   CloseFile(VerFile);
   CloseFile(ArcFile);
-
 end;
 
-procedure SaveGraph;
+procedure SaveGraph(const Graph: TGraph; VerFileName, ArcFileName: String);
 var
-  Vertice: TPVertice;
-  Neighbour: TPNeighbour;
   VerFile: File of TVertice;
   ArcFile: File of TNeighbour;
+  Vertice: TPVertice;
+  Neighbour: TPNeighbour;
+  // VerFile - Типизированный файл вершин
+  // ArcFile - Типизированный файл соседей
+  // Vertice - Ссылка на текущую вершину
+  // Neighbour - Ссылка на текущего соседа
+
 begin
 
   // Подготовка файлов
-  System.Assign(VerFile, VerFileName);
-  System.Assign(ArcFile, ArcFileName);
+  Assign(VerFile, VerFileName);
+  Assign(ArcFile, ArcFileName);
   Rewrite(VerFile);
   Rewrite(ArcFile);
 
   // Цикл А1. Проход по вершинам
-  Vertice := G.Head;
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
     Write(VerFile, Vertice^);
@@ -414,28 +466,37 @@ begin
   CloseFile(ArcFile);
 end;
 
-procedure ImportFromExcel;
+procedure ImportGraph(var Graph: TGraph; ExcelFileName: String);
 const
   ExcelApp = 'Excel.Application';
+  VerticeCenter: TPoint = (x: 0; y: 0);
 var
   MyExcel: Variant;
-  Sheet: OLEVariant;
-  ClassID: TCLSID;
-  Rez: HRESULT;
+  Sheet, Weights: OLEVariant;
+  CLSID: TCLSID;
   i, j, Rows, Cols: Integer;
-  Weights: OLEVariant;
   w, ww: Integer;
-  ImageCenter, VerticeCenter: TPoint;
-  PolygonRadius: Integer;
-  Angle: Real;
   isIncorrect: Boolean;
+  // MyExcel - Объект Excel
+  // Sheet - Объект активного листа книги
+  // Weights - Объект диапазона ячеек
+  // CLSID  - Идентификатор, определяющий тип COM-объекта
+  // i, j - Параметры циклов по строкам и столбцам диапазона
+  // Rows, Cols - Количество строк и столбцов диапазона
+  // w, ww - Симметричные в диапазоне ячейки
+  // VerticeCenter - Центр очередной вершины на холсте
+  // isIncorrect - Флаг о существовании недопустимых дуг
+
 begin
-  if CLSIDFromProgID(PWideChar(WideString(ExcelApp)), ClassID) = S_OK then
+
+  // Проверка наличия Excel на компьютере
+  if CLSIDFromProgID(PWideChar(WideString(ExcelApp)), CLSID) = S_OK then
   begin
+
     // Открытие приложения, книги и листа
-    Coinitialize(nil);
+    CoInitialize(nil);
     MyExcel := CreateOleObject(ExcelApp);
-    MyExcel.WorkBooks.Open(FileName);
+    MyExcel.WorkBooks.Open(ExcelFileName);
     Sheet := MyExcel.ActiveWorkBook.ActiveSheet;
 
     // Получение используемого диапазона ячеек
@@ -447,18 +508,20 @@ begin
 
     // Заполнение графа
     try
-      Angle := 0;
-      PolygonRadius := Min(Width, Height) div 2 - 40;
-      ImageCenter.X := Width div 2;
-      ImageCenter.Y := Height div 2;
-      InitializeGraph(G);
+
+      // Цикл А1. Проход по строкам диапазона
+      InitializeGraph(Graph); // Инициализация графа
       for i := 1 to Rows do
       begin
-        VerticeCenter.X := ImageCenter.X + trunc(PolygonRadius * sin(Angle));
-        VerticeCenter.Y := ImageCenter.Y - trunc(PolygonRadius * cos(Angle));
-        AddVertice(G, VerticeCenter);
+
+        // Добавление вершины
+        AddVertice(Graph, VerticeCenter);
+
+        // Цикл А2. Проход по столбцам диапазона
         for j := 1 to Cols do
         begin
+
+          // Получение весов в симметричных ячейках
           w := StrToInt(VarToStr(Weights[i, j]));
           ww := StrToInt(VarToStr(Weights[j, i]));
 
@@ -470,21 +533,17 @@ begin
 
           // Добавление существующей дуги
           if w <> 0 then
-            AddArc(G, i, j, w);
-        end;
-        Angle := Angle + 2 * pi / Rows;
-      end;
+            AddArc(Graph, i, j, w);
+        end; // Конец A2
+      end; // Конец A1
     finally
+
+      // Выход из Excel
       MyExcel.Quit;
       MyExcel := Unassigned;
       CoUninitialize;
-    end;
+    end; // Конец if
   end;
-end;
-
-function Distance;
-begin
-  Result := Round(Sqrt(Sqr(p2.X - p1.X) + Sqr(p2.Y - p1.Y)));
 end;
 
 end.

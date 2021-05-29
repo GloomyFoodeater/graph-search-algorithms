@@ -2,7 +2,7 @@ object fmEditor: TfmEditor
   Left = 389
   Top = 123
   Caption = #1055#1086#1080#1089#1082' '#1074' '#1075#1088#1072#1092#1072#1093
-  ClientHeight = 690
+  ClientHeight = 702
   ClientWidth = 1376
   Color = clBtnHighlight
   DoubleBuffered = True
@@ -22,20 +22,20 @@ object fmEditor: TfmEditor
     Left = 0
     Top = 0
     Width = 1112
-    Height = 690
+    Height = 702
+    Margins.Bottom = 0
     Align = alClient
     OnClick = pbCanvasClick
     OnMouseDown = pbCanvasMouseDown
     OnMouseMove = pbCanvasMouseMove
     OnMouseUp = pbCanvasMouseUp
     OnPaint = pbCanvasPaint
-    ExplicitLeft = -1
   end
   object plFunctionsContainer: TPanel
     Left = 1112
     Top = 0
     Width = 264
-    Height = 690
+    Height = 702
     Align = alRight
     BevelOuter = bvLowered
     BorderWidth = 1
@@ -54,7 +54,7 @@ object fmEditor: TfmEditor
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnAddLinl: TSpeedButton
       Tag = 1
@@ -71,7 +71,7 @@ object fmEditor: TfmEditor
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnDeleteNode: TSpeedButton
       Tag = 2
@@ -88,7 +88,7 @@ object fmEditor: TfmEditor
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnDeleteLink: TSpeedButton
       Tag = 3
@@ -105,7 +105,7 @@ object fmEditor: TfmEditor
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnDFS: TSpeedButton
       Tag = 5
@@ -116,7 +116,7 @@ object fmEditor: TfmEditor
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1074' '#1075#1083#1091#1073#1080#1085#1091
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnBFS: TSpeedButton
       Tag = 6
@@ -127,7 +127,7 @@ object fmEditor: TfmEditor
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1074' '#1096#1080#1088#1080#1085#1091
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object btnDijkstra: TSpeedButton
       Tag = 7
@@ -138,7 +138,7 @@ object fmEditor: TfmEditor
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1086#1080#1089#1082' '#1044#1077#1081#1082#1089#1090#1088#1099
-      OnClick = SetClickState
+      OnClick = SetCanvasState
     end
     object lbEdit: TLabel
       Left = 30
@@ -175,30 +175,14 @@ object fmEditor: TfmEditor
       AllowAllUp = True
       GroupIndex = 1
       Caption = #1055#1077#1088#1077#1084#1077#1097#1072#1090#1100
-      OnClick = SetClickState
-    end
-    object lbResults: TLabel
-      AlignWithMargins = True
-      Left = 12
-      Top = 568
-      Width = 240
-      Height = 115
-      Margins.Left = 10
-      Margins.Right = 10
-      Margins.Bottom = 5
-      Align = alBottom
-      Font.Charset = RUSSIAN_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -24
-      Font.Name = 'Times New Roman'
-      Font.Style = []
-      ParentFont = False
+      OnClick = SetCanvasState
     end
     object cbNoWeight: TCheckBox
       Left = 48
       Top = 313
       Width = 185
       Height = 25
+      TabStop = False
       Caption = #1053#1077#1074#1079#1074#1077#1096#1077#1085#1085#1099#1077' '#1076#1091#1075#1080
       Checked = True
       Font.Charset = RUSSIAN_CHARSET

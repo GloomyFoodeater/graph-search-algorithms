@@ -14,6 +14,7 @@ object fmArcInput: TfmArcInput
   OldCreateOrder = False
   Position = poMainFormCenter
   OnCreate = FormCreate
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 16
   object leWeight: TLabeledEdit

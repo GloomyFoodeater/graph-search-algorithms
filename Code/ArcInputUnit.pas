@@ -14,6 +14,7 @@ type
     btnCancel: TButton;
     procedure btnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   public
     Weight: Integer;
   end;
@@ -40,6 +41,11 @@ end;
 procedure TfmArcInput.FormCreate(Sender: TObject);
 begin
   Weight := 1;
+end;
+
+procedure TfmArcInput.FormShow(Sender: TObject);
+begin
+  leWeight.SetFocus;
 end;
 
 end.

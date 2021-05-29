@@ -2,285 +2,324 @@ unit GraphSearch;
 
 interface
 
-uses Digraph, DynStructures;
+uses SysUtils, Digraph, DynamicStructures;
 
 type
   // Тип матрицы весов
-  TWeights = array of array of Integer;
+  TWeightMatrix = array of array of Integer;
 
+  // Тип информации о поиске
   TSearchInfo = record
-    Distance: Integer;
-    ArcsCount: Integer;
     Path: TStack;
+    PathString: String;
+    ArcsCount: Integer;
+    Distance: Integer;
+    VisitsCount: Integer;
   end;
 
-  { Процедура преобразования графа в матрицу весов }
-procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
+  // Подпрограмма преобразования графа в матрицу весов
+function ToWeightMatrix(const Graph: TGraph): TWeightMatrix;
 
-{ Процедура поиска в глубину }
-procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+// Подпрограмма обхода в глубину
+function DFS(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
 
-{ Процедура поиска в ширину }
-procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+// Подпрограмма обхода в ширину
+function BFS(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
 
-{ Процедура поиска алгоритмом Дейкстры }
-procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+// Подпрограмма поиска алгоритмом Дейкстры
+function Dijkstra(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
 
 implementation
 
 const
   INF = 1000000000;
 
-  { Процедура восстановления пути по массиву предков }
-procedure RestorePath(const Graph: TWeights; const Parents: array of Integer;
-  const Src, Dest: Integer; out Info: TSearchInfo);
-var
-  v, w: Integer;
-begin
+  // Подпрограмма восстановления пути
+function RestorePath(const Graph: TWeightMatrix;
+  const Parents: array of Integer; const Src, Dest: Integer): TSearchInfo;
+const
+  Splitter = ', ';
+  // Splitter - Разделитель между вершинами в строке пути
 
-  with Info do
+var
+  v, u, w: Integer;
+  // v - Номер вершины-начала дуги
+  // u - Номер вершины-конца дуги
+
+begin
+  with Result do
   begin
-    InitializeStack(Path); // Инициализация стека
-    v := Dest; // Сохранение конца пути
+
+    // Инициализация начальных значений
+    PathString := '';
+    InitializeStack(Path);
     ArcsCount := 0;
     Distance := 0;
-    // Цикл А1. Добавление очередного предка в пути
-    while (v <> Src) and (v <> 0) do
+
+    // Проверка существования пути или пути из 1 вершины
+    if (Parents[Dest - 1] <> 0) or (Src = Dest) then
     begin
-      Push(Path, v);
-      Inc(ArcsCount);
-      w := Graph[Parents[v - 1] - 1, v - 1];
-      if w = INF then
-        w := 0;
-      Distance := Distance + w;
-      v := Parents[v - 1];
-    end; // Конец А1
 
-    Push(Path, v);
-
-    // Случай, если путь не был найден
-    if v = 0 then
-      DestroyList(Path);
-  end;
-
-end;
-
-procedure DFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
-var
-  v, u: Integer;
-  Order: Integer;
-  s: TStack;
-  isUsed: Array of Boolean;
-  Parents: Array of Integer;
-begin
-
-  Order := Length(Graph); // Получение порядка графа
-  v := Src; // Сохранение старта
-
-  // Подготовка стека
-  InitializeStack(s);
-  Push(s, v);
-
-  // Подготовка меток
-  SetLength(isUsed, Order);
-  for u := 1 to Order do
-    isUsed[u - 1] := False;
-
-  // Подготовка массива предков
-  SetLength(Parents, Order);
-  Parents[v - 1] := 0;
-
-  // Цикл А1. Посещение вершин в стеке
-  while s <> nil do
-  begin
-
-    // Получение вершины
-    v := Pop(s);
-    if not isUsed[v - 1] then
-    begin
-      isUsed[v - 1] := true;
-
-      // Цикл А2. Добавление в стек всех соседей вершины
-      for u := Order downto 1 do
+      // Цикл А1. Проход по массиву предков
+      u := Dest;
+      while u <> Src do
       begin
-        if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INF) then
-        begin
-          Parents[u - 1] := v;
-          Push(s, u);
-        end; // Конец if
+        v := Parents[u - 1];
 
-      end; // Конец А2
+        // Изменение информации о пути
+        Push(Path, u);
+        PathString := Splitter + IntToStr(u) + PathString;
+        Inc(ArcsCount);
+        Distance := Distance + Graph[v - 1, u - 1];
 
+        // Переход к следующей вершине
+        u := v;
+      end; // Конец А1
+
+      // Сохранение начала пути
+      Push(Path, Src);
+      PathString := IntToStr(u) + PathString;
     end;
-
-  end; // Конец А1
-
-  // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
+  end;
 end;
 
-procedure BFS(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
+function DFS(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
 var
   v, u: Integer;
   Order: Integer;
-  q: TQueue;
-  isUsed: Array of Boolean;
-  Parents: Array of Integer;
-begin
-
-  Order := Length(Graph); // Получение порядка графа
-  v := Src; // Сохранение старта
-
-  // Подготовка стека
-  InitializeQueue(q);
-  Enqueue(q, v);
-
-  // Подготовка меток
-  SetLength(isUsed, Order);
-  for u := 1 to Order do
-    isUsed[u - 1] := False;
-  isUsed[v - 1] := true;
-
-  // Подготовка массива предков
-  SetLength(Parents, Order);
-  Parents[v - 1] := 0;
-
-  // Цикл А1. Посещение всех вершин из очереди
-  while q.Head <> nil do
-  begin
-
-    // Получение вершины
-    v := Dequeue(q);
-
-    // Цикл А2. Добавление в стек всех соседей вершины
-    for u := 1 to Order do
-    begin
-      if not isUsed[u - 1] and (Graph[v - 1, u - 1] <> INF) then
-      begin
-        isUsed[u - 1] := true;
-        Parents[u - 1] := v;
-        Enqueue(q, u);
-      end; // Конец if
-
-    end; // Конец А2
-
-  end; // Конец А1
-
-  // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
-
-end;
-
-procedure Dijkstra(const Graph: TWeights; const Src, Dest: Integer;
-  out Info: TSearchInfo);
-var
-  v, u: Integer;
-  Order: Integer;
+  Stack: TStack;
   isVisited: Array of Boolean;
   Parents: Array of Integer;
-  Marks: Array of Integer;
-  isFound: Boolean;
-  d: Integer;
-  i: Integer;
+  // v - Номер посещаемой вершины
+  // u - Номер соседа вершины
+  // Order - Порядок графа
+  // Stack - Стек вершин
+  // isVisited - Массив флагов
+  // Parents - Массив предков
+
 begin
+  Result.VisitsCount := 0;
 
-  Order := Length(Graph); // Получение порядка графа
-  v := Src; // Сохранение старта
-
-  // Подготовка массива расстояний
-  SetLength(Marks, Order);
-  for u := 1 to Order do
-    Marks[u - 1] := INF;
-  Marks[v - 1] := 0;
-
-  // Подготовка массива меток
+  // Инициализация вспомогательных данных
+  Order := Length(Graph);
+  InitializeStack(Stack);
   SetLength(isVisited, Order);
-  for u := 1 to Order do
-    isVisited[u - 1] := False;
-
-  // Подготовка массива предков
   SetLength(Parents, Order);
-  Parents[v - 1] := 0;
+  for v := 1 to Order do
+  begin
+    Parents[v - 1] := 0;
+    isVisited[v - 1] := False;
+  end;
 
-  // Инициализация условий входа в цикл
-  isFound := v = Dest;
-  d := 0;
-
-  // Цикл А1. Посещение вершин с минимальными расстояниями
-  while not(isFound or (d = INF)) do
+  // Цикл А1. Посещение вершин в стеке
+  Push(Stack, Src);
+  while Stack <> nil do
   begin
 
-    // Цикл А2. Уменьшение меток
+    // Получение вершины и сравнение с конечной
+    v := Pop(Stack);
+    Inc(Result.VisitsCount);
+    if v = Dest then
+    begin
+      DestroyList(Stack);
+      isVisited[v - 1] := true;
+    end;
+
+    // Добавление в стек соседей
+    if not isVisited[v - 1] then
+    begin
+      isVisited[v - 1] := true;
+
+      // Цикл А2. Добавление в стек непосещённых соседей
+      for u := Order downto 1 do
+      begin
+        if not isVisited[u - 1] and (Graph[v - 1, u - 1] <> INF) then
+        begin
+          Parents[u - 1] := v; // Сохранение пути
+          Push(Stack, u);
+        end; // Конец if
+      end; // Конец А2
+    end; // Конец if
+  end; // Конец А1
+
+  // Восстановление пути
+  Result := RestorePath(Graph, Parents, Src, Dest);
+end;
+
+function BFS(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
+var
+  v, u: Integer;
+  Order: Integer;
+  Queue: TQueue;
+  isVisited: Array of Boolean;
+  Parents: Array of Integer;
+  // v - Номер посещаемой вершины
+  // u - Номер соседа вершины
+  // Order - Порядок графа
+  // Stack - Стек вершин
+  // isVisited - Массив флагов
+  // Parents - Массив предков
+
+begin
+  Result.VisitsCount := 0;
+
+  // Инициализация вспомогательных данных
+  Order := Length(Graph);
+  InitializeQueue(Queue);
+  SetLength(isVisited, Order);
+  SetLength(Parents, Order);
+  for v := 1 to Order do
+  begin
+    Parents[v - 1] := 0;
+    isVisited[v - 1] := False;
+  end;
+
+  // Цикл А1. Посещение вершин в очереди
+  Enqueue(Queue, Src);
+  isVisited[Src - 1] := true;
+  while Queue.Head <> nil do
+  begin
+
+    // Получение вершины и сравнение с конечной
+    v := Dequeue(Queue);
+    Inc(Result.VisitsCount);
+    if v = Dest then
+    begin
+      DestroyList(Queue.Head);
+      Order := 0; // Нарушение условия входа в А2
+    end;
+
+    // Цикл А2. Добавление в стек соседей вершины
+    for u := 1 to Order do
+    begin
+      if not isVisited[u - 1] and (Graph[v - 1, u - 1] <> INF) then
+      begin
+        isVisited[u - 1] := true;
+        Parents[u - 1] := v;
+        Enqueue(Queue, u);
+      end; // Конец if
+    end; // Конец А2
+  end; // Конец А1
+
+  // Восстановление пути
+  Result := RestorePath(Graph, Parents, Src, Dest);
+end;
+
+function Dijkstra(const Graph: TWeightMatrix; Src, Dest: Integer): TSearchInfo;
+var
+  v, u: Integer;
+  Order: Integer;
+  Marks: Array of Integer;
+  isVisited: Array of Boolean;
+  Parents: Array of Integer;
+  d: Integer;
+  // v - Номер посещаемой вершины
+  // u - Номер соседа вершины
+  // Order - Порядок графа
+  // Marks - Массив меток
+  // isVisited - Массив флагов
+  // Parents - Массив предков
+  // d - Метка посещаемой вершины
+
+begin
+  Result.VisitsCount := 0;
+
+  // Инициализация вспомогательных данных
+  Order := Length(Graph);
+  SetLength(Marks, Order);
+  SetLength(isVisited, Order);
+  SetLength(Parents, Order);
+  for u := 1 to Order do
+  begin
+    Marks[u - 1] := INF;
+    Parents[u - 1] := 0;
+    isVisited[u - 1] := False;
+  end;
+  Marks[Src - 1] := 0;
+
+  // Цикл А1. Посещение вершин с минимальными метками
+  repeat
+
+    // Цикл А2. Поиск мин. метки у непосещённых вершин
+    d := INF;
+    for u := 1 to Order do
+    begin
+      if not isVisited[u - 1] and (Marks[u - 1] < d) then
+      begin
+        d := Marks[u - 1];
+        v := u;
+      end; // Конец if
+    end; // Конец А2
+
+    // Посещение найденной вершины
+    if d <> INF then
+    begin
+      isVisited[v - 1] := true;
+      Inc(Result.VisitsCount);
+    end
+    else
+      Order := 0; // Нарушение условия входа в А3
+
+    // Сравнение с конечной вершиной
+    if v = Dest then
+    begin
+      d := INF; // Выход из А1
+      Order := 0; // Нарушение условия входа в А3
+    end;
+
+    // Цикл А3. Уменьшение меток
     for u := 1 to Order do
     begin
       if not isVisited[u - 1] and (Marks[u - 1] > d + Graph[v - 1, u - 1]) then
       begin
-        Parents[u - 1] := v;
+        Parents[u - 1] := v; // Сохранение пути
         Marks[u - 1] := d + Graph[v - 1, u - 1];
-      end;
-    end; // Конец А2
-
-    // Посещение следущей вершины
-    isVisited[v - 1] := true;
-    isFound := v = Dest;
-
-    d := INF;
-
-    // Цикл А1. Поиск минимального элемента
-    for i := Low(Marks) to High(Marks) do
-    begin
-
-      // Проверка посещённости и сравнение
-      if not isVisited[i] and (Marks[i] < d) then
-      begin
-        d := Marks[i];
-        v := i + 1;
       end; // Конец if
+    end; // Конец А3
 
-    end; // Конец А1
-
-  end; // Конец А1
+  until d = INF; // Конец А1
 
   // Восстановление пути
-  RestorePath(Graph, Parents, Src, Dest, Info);
-
+  Result := RestorePath(Graph, Parents, Src, Dest);
 end;
 
-{ Процедура преобразования графа в матрицу весов }
-procedure ToWeightMatrix(const G: TGraph; out Matrix: TWeights);
+function ToWeightMatrix(const Graph: TGraph): TWeightMatrix;
 var
-  v, u: Integer;
   Vertice: TPVertice;
   Neighbour: TPNeighbour;
+  v, u: Integer;
+  // Vertice - Ссылка на текущую вершину
+  // Neighbour - Ссылка на текущего соседа
+  // v - Параметр цикла по вершинам
+  // u - Параметр цикла по соседям
+
 begin
+  SetLength(Result, Graph.Order, Graph.Order);
 
-  // Инициализация матрицы
-  SetLength(Matrix, G.Order, G.Order);
-  for v := 1 to G.Order do
-    for u := 1 to G.Order do
-      Matrix[v - 1, u - 1] := INF;
+  // Цикл А1. Проход по строкам
+  for v := 1 to Graph.Order do
 
-  // Цикл А2. Проход по вершинам
-  Vertice := G.Head;
+    // Цикл А2. Проход по столбцам
+    for u := 1 to Graph.Order do
+      Result[v - 1, u - 1] := INF;
+
+  // Цикл А3. Проход по вершинам
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
+    v := Vertice.Number;
 
-    // Цикл A3. Проход по соседям вершины
+    // Цикл A4. Проход по соседям
     Neighbour := Vertice.Head;
     while Neighbour <> nil do
     begin
-      Matrix[Vertice.Number - 1, Neighbour.Number - 1] := Neighbour.Weight;
+      u := Neighbour.Number;
+      Result[v - 1, u - 1] := Neighbour.Weight;
       Neighbour := Neighbour.Next;
-    end;
-    // Конец A3
+    end; // Конец A4
 
     Vertice := Vertice.Next;
-  end; // Конец A2
+  end; // Конец A3
 end;
 
 end.

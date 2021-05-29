@@ -138,7 +138,7 @@
             <Form>fmEditor</Form>
         </DCCReference>
         <DCCReference Include="Digraph.pas"/>
-        <DCCReference Include="DynStructures.pas"/>
+        <DCCReference Include="DynamicStructures.pas"/>
         <DCCReference Include="GraphSearch.pas"/>
         <DCCReference Include="GraphDrawing.pas"/>
         <DCCReference Include="AboutUnit.pas">
@@ -147,6 +147,10 @@
         </DCCReference>
         <DCCReference Include="ArcInputUnit.pas">
             <Form>fmArcInput</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="SearchOutputUnit.pas">
+            <Form>fmSearchOutput</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">

@@ -2,74 +2,106 @@ unit GraphDrawing;
 
 interface
 
-uses Digraph, System.Types, Math, VCL.Graphics, DynStructures;
+uses System.Types, VCL.Graphics, Math, Digraph, DynamicStructures;
 
-procedure Visit(var G: TGraph; var Path: TStack);
+// Подпрограмма изменения стиля вершин и дуг пути
+procedure MakeVisited(var Graph: TGraph; var Path: TStack);
 
-procedure MakePassive(var G: TGraph);
+// Подпрограмма обнуления стиля вершин и дуг графа
+procedure MakePassive(var Graph: TGraph);
 
+// Подпрограмма изменения координат на вершины правильного многоугольника
+procedure MakeRegPolygon(var Graph: TGraph; Width, Height: Integer);
+
+// Подпрограмма перерисовки графа на холсте
 procedure RedrawGraph(const Canvas: TCanvas; Width, Height: Integer;
-  const G: TGraph);
+  const Graph: TGraph);
 
 implementation
 
 type
+
+  // Тип ломаной на холсте, соответствующей дуге
   ArcLine = Array [1 .. 5] of TPoint;
 
-procedure GetArcPoints(c1, c2: TPoint; R: Integer; out p: ArcLine);
+  // Подпрограмма получения ломаной для дуги
+function GetArcPoints(c1, c2: TPoint; R: Integer): ArcLine;
 const
-  ArrowAngle = (45 / 180) * pi;
+  ArrowAngle = pi / 4;
+  // ArrowAngle - Угол наклона концов стрелки
+
 var
   XStart, YStart: Integer;
   XEnd, YEnd: Integer;
   d: Integer;
   LineAngle: Real;
   Sign: Integer;
+  // XStart, YStart - Координаты первой вершины
+  // XEnd, YEnd - Координаты второй вершины
+  // d - Переменная для вычисления расстояния
+  // LineAngle - Угол наклона главной линии
+  // Sign - Знак разности абсцисс первой и второй вершины
+
 begin
-  d := Distance(c1, c2);
+
+  // Вычисление концов главной линии
+  d := Trunc(c1.Distance(c2));
   XEnd := Round(c2.x + R * (c1.x - c2.x) / d);
   YEnd := Round(c2.y + R * (c1.y - c2.y) / d);
   XStart := Round(c1.x + R * (c2.x - c1.x) / d);
   YStart := Round(c1.y + R * (c2.y - c1.y) / d);
 
-  p[1].x := XStart;
-  p[1].y := YStart;
-  p[2].x := XEnd;
-  p[2].y := YEnd;
-  p[4] := p[2];
+  // Инициализация точек главной линии
+  Result[1].x := XStart;
+  Result[1].y := YStart;
+  Result[2].x := XEnd;
+  Result[2].y := YEnd;
+  Result[4] := Result[2];
 
-  d := Distance(p[1], p[2]) + 1;
-  LineAngle := ArcSin((YStart - YEnd) / d);
+  // Вычисление данных для концов стрелки
+  d := Trunc(Result[1].Distance(Result[2]));
+  if d <> 0 then
+    LineAngle := ArcSin((YStart - YEnd) / d)
+  else
+    LineAngle := 0;
   Sign := 2 * Ord(XStart >= XEnd) - 1;
+  d := R div 2;
 
-  p[3].x := XEnd + Sign * trunc(cos(ArrowAngle - Sign * LineAngle) * (R div 2));
-  p[3].y := YEnd - Sign * trunc(sin(ArrowAngle - Sign * LineAngle) * (R div 2));
-  p[5].x := XEnd + Sign * trunc(cos(ArrowAngle + Sign * LineAngle) * (R div 2));
-  p[5].y := YEnd + Sign * trunc(sin(ArrowAngle + Sign * LineAngle) * (R div 2));
+  // Вычисление координат стрелок
+  Result[3].x := XEnd + Sign * Trunc(cos(ArrowAngle - Sign * LineAngle) * d);
+  Result[3].y := YEnd - Sign * Trunc(sin(ArrowAngle - Sign * LineAngle) * d);
+  Result[5].x := XEnd + Sign * Trunc(cos(ArrowAngle + Sign * LineAngle) * d);
+  Result[5].y := YEnd + Sign * Trunc(sin(ArrowAngle + Sign * LineAngle) * d);
 end;
 
+// Подпрограмма рисования вершины
 procedure DrawVertice(const Canvas: TCanvas; R: Integer;
   const Vertice: TPVertice);
 var
   SNumber: String;
   XMid, YMid: Integer;
+  // SNumber - Строка с номером вершины
+  // XMid, YMid - Координаты SNumber
+
 begin
   with Canvas, Vertice^, Vertice.Center do
   begin
-    case Design of
-      dgPassive:
+
+    // Инициализация данных для рисования
+    case Style of
+      stPassive:
         begin
           Pen.Color := clBlack;
           Font.Color := clBlack;
           Brush.Color := clWhite;
         end;
-      dgActive:
+      stActive:
         begin
           Pen.Color := clRed;
           Font.Color := clBlack;
           Brush.Color := clCream;
         end;
-      dgVisited:
+      stVisited:
         begin
           Pen.Color := clTeal;
           Font.Color := clWhite;
@@ -77,6 +109,7 @@ begin
         end;
     end;
 
+    // Рисование вершины с её номером
     Str(Vertice.Number, SNumber);
     XMid := x - TextWidth(SNumber) div 2;
     YMid := y - TextHeight(SNumber) div 2;
@@ -85,6 +118,7 @@ begin
   end;
 end;
 
+// Подпрограмма рисования дуги
 procedure DrawArc(const Canvas: TCanvas; R: Integer;
   const SrcCenter, DstCenter: TPoint; const Neighbour: TPNeighbour);
 var
@@ -92,6 +126,11 @@ var
   SWeight: String;
   XMid, YMid: Integer;
   HText, WText: Integer;
+  // Points - Ломаная, соотв. дуге
+  // Sweight - Строка с весом
+  // XMid, YMid - Координаты центра дуги
+  // HText, WText - Размеры строки с весом
+
 begin
   with Canvas do
   begin
@@ -100,14 +139,16 @@ begin
     if Neighbour.isVisited then
     begin
       Pen.Color := clTeal;
-      Font.Color := clTeal;
+      Font.Color := clWhite;
+      Brush.Color := clBlack;
     end
     else
     begin
       Pen.Color := clBlack;
       Font.Color := clBlack;
+      Brush.Color := clWhite;
     end;
-    GetArcPoints(SrcCenter, DstCenter, R, Points);
+    Points := GetArcPoints(SrcCenter, DstCenter, R);
 
     // Рисование дуги и веса
     Polyline(Points);
@@ -125,94 +166,164 @@ begin
 
 end;
 
-procedure Visit;
+procedure MakeVisited(var Graph: TGraph; var Path: TStack);
 var
   Vertice: TPVertice;
   Neighbour: TPNeighbour;
-  v, u: Integer;
+  v: Integer;
+  // Vertice - Ссылка на текущую вершину
+  // Neighbour - Ссылка на текущего соседа
+  // v - Номер вершины, извлечённой из пути
+
 begin
+
+  // Цикл А1. Проход по пути вершинам пути
   while Path <> nil do
   begin
+
+    // Изменение стиля вершины
     v := Pop(Path);
-    GetByNumber(G, v, Vertice);
-    Vertice.Design := dgVisited;
+    Vertice := GetByNumber(Graph, v);
+    Vertice.Style := stVisited;
+
+    // Изменение стиля выходящей дуги
     if Path <> nil then
     begin
-      u := Pop(Path);
-
-      // Посещение ребра
+      v := Pop(Path);
       Neighbour := Vertice.Head;
-      while u <> Neighbour.Number do
+
+      // Цикл А2. Поиск соседа
+      while v <> Neighbour.Number do
         Neighbour := Neighbour.Next;
       Neighbour.isVisited := true;
+      Push(Path, v);
+    end; // Конец if
+  end; // Конец А1
 
-      Push(Path, u);
-    end;
-  end;
-  G.isPainted := true;
+  // Меток о раскраске графа
+  Graph.isPainted := true;
 end;
 
-procedure MakePassive;
+procedure MakePassive(var Graph: TGraph);
 var
   Vertice: TPVertice;
   Neighbour: TPNeighbour;
+  // Vertice - Ссылка на текущую вершину
+  // Neighbour - Ссылка на текущего соседа
+
 begin
-  Vertice := G.Head;
+
+  // Цикл А1. Проход по вершинам
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
-    Vertice.Design := dgPassive;
+    Vertice.Style := stPassive;
+
+    // Цикл А2. Проход по соседям
     Neighbour := Vertice.Head;
     while Neighbour <> nil do
     begin
       Neighbour.isVisited := false;
       Neighbour := Neighbour.Next;
-    end;
-
+    end; // Конец А2
     Vertice := Vertice.Next;
   end;
-  G.isPainted := false;
+
+  // Изменение флага о раскраске графа
+  Graph.isPainted := false;
 end;
 
-procedure RedrawGraph;
+procedure MakeRegPolygon(var Graph: TGraph; Width, Height: Integer);
+var
+  Vertice: TPVertice;
+  ImageCenter: TPoint;
+  PolygonRadius: Integer;
+  Angle: Real;
+  // Vertice - Ссылка на текущую вершину
+  // ImageCenter - Центр изображения
+  // PolygonRadius - Радиус правильного многоугольника
+  // Angle - Текущий угол наклона радиус-вектора вершины
+
+begin
+
+  // Инициализация угла, радиуса и центра описанной окружности
+  Angle := 0;
+  PolygonRadius := Min(Width, Height) div 2 - Graph.R;
+  ImageCenter.x := Width div 2;
+  ImageCenter.y := Height div 2;
+
+  // Цикл А1. Проход по вершинам
+  Vertice := Graph.Head;
+  while Vertice <> nil do
+  begin
+    // Присвоение координат
+    Vertice.Center.x := ImageCenter.x + Trunc(PolygonRadius * sin(Angle));
+    Vertice.Center.y := ImageCenter.y - Trunc(PolygonRadius * cos(Angle));
+
+    // Переход к следующей вершине
+    Vertice := Vertice.Next;
+    Angle := Angle + 2 * pi / Graph.Order;
+  end; // Конец А1
+end;
+
+procedure RedrawGraph(const Canvas: TCanvas; Width, Height: Integer;
+  const Graph: TGraph);
 var
   Vertice, AdjVertice, Active: TPVertice;
   Neighbour: TPNeighbour;
+  // Vertice - Текущая вершина
+  // AdjVertice - Смежная Vertice вершина
+  // Active - Вершина со стилем stActive
+  // Neighbour - Текущий сосед
+
 begin
+
+  // Настройка цветов и шрифтов
   with Canvas do
   begin
     Pen.Color := clWhite;
     Rectangle(0, 0, Width, Height);
-    Pen.Color := clBlack;
     Pen.Width := 3;
     Font.Size := 15;
     Font.Style := [fsBold];
   end;
 
-  // Прорисовка дуг
-  Vertice := G.Head;
+  // Цикл А1. Проход по вершинам
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
+
+    // Цикл А2. Проход по дугам
     Neighbour := Vertice.Head;
     while Neighbour <> nil do
     begin
-      GetByNumber(G, Neighbour.Number, AdjVertice);
-      DrawArc(Canvas, G.R, Vertice.Center, AdjVertice.Center, Neighbour);
+      AdjVertice := GetByNumber(Graph, Neighbour.Number);
+
+      // Прорисовка дуги
+      DrawArc(Canvas, Graph.R, Vertice.Center, AdjVertice.Center, Neighbour);
+
       Neighbour := Neighbour.Next;
     end;
     Vertice := Vertice.Next;
   end;
 
-  // Прорисовка вершин
-  Vertice := G.Head;
+  // Цикл А3. Проход по вершинам
+  Vertice := Graph.Head;
   while Vertice <> nil do
   begin
-    DrawVertice(Canvas, G.R, Vertice);
-    if Vertice.Design = dgActive then
+
+    // Прорисовка вершины
+    DrawVertice(Canvas, Graph.R, Vertice);
+
+    // Сохранение активной вершины
+    if Vertice.Style = stActive then
       Active := Vertice;
     Vertice := Vertice.Next;
   end;
+
+  // Прорисовка активной вершины
   if Active <> nil then
-    DrawVertice(Canvas, G.R, Active);
+    DrawVertice(Canvas, Graph.R, Active);
 
 end;
 
