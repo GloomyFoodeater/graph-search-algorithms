@@ -1,0 +1,56 @@
+unit SearchOutputUnit;
+{
+  Модуль с описанием формы вывода пути,
+  которая появляется при нахождении пути
+  с помощью одного из алгоритмов.
+}
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, GraphSearch;
+
+type
+
+  // Тип вспомогательной формы
+  TfmSearchOutput = class(TForm)
+    lbResults: TLabel;
+    procedure FormShow(Sender: TObject);
+  public
+    Info: TSearchInfo; // Информация о пути
+  end;
+
+var
+  fmSearchOutput: TfmSearchOutput;
+  // fmSearchOutput - Вспомогательная форма
+
+implementation
+
+{$R *.dfm}
+
+// Обработчик показа формы
+procedure TfmSearchOutput.FormShow(Sender: TObject);
+const
+  NL = #13#10;
+var
+  ResString: String;
+begin
+  ResString := 'Найденный путь:' + NL + '%s' + NL + NL;
+  ResString := ResString + 'Количество дуг в пути: %d' + NL;
+  ResString := ResString + 'Длина найденного пути: %d' + NL;
+  ResString := ResString + 'Количество посещений: %d' + NL;
+  lbResults.Caption := Format(ResString, [Info.PathString, Info.ArcsCount,
+    Info.Distance, Info.VisitsCount]);
+  { lbResults.Caption := 'Найденный путь:'#13#10 + Info.PathString +
+    #13#10 + #13#10;
+    lbResults.Caption := lbResults.Caption + 'Количество дуг в пути: ' +
+    IntToStr(Info.ArcsCount) + #13#10;
+    lbResults.Caption := lbResults.Caption + 'Длина найденного пути: ' +
+    IntToStr(Info.Distance) + #13#10;
+    lbResults.Caption := lbResults.Caption + 'Количество посещений: ' +
+    IntToStr(Info.VisitsCount) + #13#10; }
+end;
+
+end.
